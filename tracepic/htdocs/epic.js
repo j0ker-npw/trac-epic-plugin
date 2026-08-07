@@ -64,10 +64,17 @@
 
     $.each(links, function (i, item) {
       var url = ticketUrl(conf, item.id);
-      var $tr = $("<tr/>").attr("data-link-id", item.id);
-      $tr.append($("<td/>").addClass("epic-col-id").append(
-        $("<a/>").attr("href", url).addClass(item.status)
-          .text("#" + item.id)));
+      // Row colour follows Trac's default report/query scheme:
+      // odd/even striping plus a prioN class derived from the ticket's
+      // priority value.  Closed tickets get a line-through on the id link.
+      var rowCls = (i % 2 ? "even" : "odd") +
+                   " prio" + (item.priority_value || "");
+      var $tr = $("<tr/>").attr("data-link-id", item.id).addClass(rowCls);
+      var $idLink = $("<a/>").attr("href", url).text("#" + item.id);
+      if (item.status === "closed") {
+        $idLink.addClass("closed");
+      }
+      $tr.append($("<td/>").addClass("epic-col-id").append($idLink));
       $tr.append($("<td/>").addClass("epic-col-summary").append(
         $("<a/>").attr("href", url).text(item.summary)));
       $tr.append($("<td/>").addClass("epic-col-component")

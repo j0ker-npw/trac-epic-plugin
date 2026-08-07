@@ -18,7 +18,7 @@
     #     endif
   </h3>
 
-  <table class="listing epic-links-table"
+  <table class="listing tickets epic-links-table"
          # if not linked:
          style="display:none"
          # endif
@@ -39,9 +39,10 @@
     </thead>
     <tbody>
       # for item in linked:
-      <tr data-link-id="${item.id}">
+      <tr data-link-id="${item.id}"
+          class="${('even' if loop.index0 % 2 else 'odd') + ' prio' + (item.priority_value or '')}">
         <td class="epic-col-id">
-          <a href="${href.ticket(item.id)}" class="${item.status}">${'#%s' % item.id}</a>
+          <a href="${href.ticket(item.id)}"${({'class': 'closed'} if item.status == 'closed' else {})|htmlattr}>${'#%s' % item.id}</a>
         </td>
         <td class="epic-col-summary">
           <a href="${href.ticket(item.id)}">${item.summary}</a>

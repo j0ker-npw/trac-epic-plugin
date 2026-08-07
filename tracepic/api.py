@@ -234,19 +234,31 @@ class EpicLinkSystem(Component):
         microsecond integer, may be ``None``).  The web UI formats
         ``changetime`` into a human readable ``modified`` string using the
         viewer's timezone.
+
+        It also returns ``priority`` (the priority name) and
+        ``priority_value`` (the priority's position in the ``enum`` table as
+        a string, e.g. ``'1'`` for the highest priority) so the web UI can
+        colour table rows exactly like Trac's default report/query views
+        (``prio1`` .. ``prioN`` CSS classes).  ``priority_value`` is ``None``
+        when the ticket has no priority or the value is not defined.
         """
-        for (summary, component, ttype, status, owner,
-             changetime) in env.db_query("""
-                SELECT summary, component, type, status, owner, changetime
-                FROM ticket WHERE id=%s
-                """, (int(ticket_id),)):
+        for (summary, component, ttype, status, owner, changetime,
+             priority, priority_value) in env.db_query("""
+                SELECT t.summary, t.component, t.type, t.status, t.owner,
+                       t.changetime, t.priority, e.value
+                FROM ticket t
+                LEFT JOIN enum e ON e.type=%s AND e.name=t.priority
+                WHERE t.id=%s
+                """, ('priority', int(ticket_id))):
             return {'id': int(ticket_id),
                     'summary': summary,
                     'component': component,
                     'type': ttype,
                     'status': status,
                     'owner': owner,
-                    'changetime': changetime}
+                    'changetime': changetime,
+                    'priority': priority,
+                    'priority_value': priority_value}
         return None
 
     # ------------------------------------------------------------------

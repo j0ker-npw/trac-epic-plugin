@@ -276,7 +276,13 @@ class EpicWebUI(Component):
             except Exception:
                 modified = ''
         info['modified'] = modified
-        for key in ('summary', 'component', 'type', 'status', 'owner'):
+        # Priority value drives the Trac ``prioN`` row colour class.  Keep it
+        # as a bare string (e.g. '1'..'6') or '' when undefined, mirroring
+        # Trac's own ``'prio' + (result._priority_value or '')`` logic.
+        pval = info.get('priority_value')
+        info['priority_value'] = '' if pval is None else str(pval)
+        for key in ('summary', 'component', 'type', 'status', 'owner',
+                    'priority'):
             if info.get(key) is None:
                 info[key] = ''
         return info

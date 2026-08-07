@@ -4,6 +4,37 @@ All notable changes to TracEpicPlugin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-08-07
+
+### Changed
+- **Enhanced visual styling** to match Trac's default ticket UI:
+  - Epic/Linked-Tickets sections now have the same pale-yellow background,
+    border and rounded corners as the ticket Description box (`#ticketbox`).
+  - Section title now matches the "Description" heading style (color `#663`,
+    bottom border `#dd9`).
+- **Ticket table rows are now colour-coded by priority**, matching Trac's
+  default report/query scheme:
+  - `blocker` → light red (`#fdc`/`#fed`)
+  - `critical` → yellow (`#ffb`/`#ffd`)
+  - `major` → pale grey (`#fbfbfb`/`#f6f6f6`)
+  - `minor` → cyan (`#e7ffff`/`#dff`)
+  - `trivial` → blue (`#e7eeff`/`#dde7ff`)
+  - Alternating odd/even row shading remains.
+- **Closed tickets** now display with a line-through strike on the ticket ID
+  link (CSS `a.closed`, as elsewhere in Trac).
+- `EpicLinkSystem.get_ticket_summary()` now also returns `priority` and
+  `priority_value` (the numeric enum value) so the web UI can apply the
+  correct `prioN` CSS class to each row.
+- `EpicWebUI._decorate()` normalises `priority_value` to a string (e.g. `'1'`
+  for blocker) or empty string when undefined.
+- Template (`epic_section.html`) and JavaScript (`epic.js`) assign row classes
+  `odd`/`even` + `prioN` and conditionally add `class="closed"` to ticket
+  links when `status == 'closed'`.
+- `epic.css` now defines the full `prioN` colour palette scoped to
+  `#epic-links` (as `report.css` is not loaded on the ticket page).
+- Added `tests/test_api.py::test_get_ticket_summary_priority_value` to verify
+  priority-value lookup logic.
+
 ## [1.1.0] - 2026-08-07
 
 ### Changed

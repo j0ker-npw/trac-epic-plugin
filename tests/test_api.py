@@ -140,11 +140,24 @@ class EpicLinkSystemTestCase(unittest.TestCase):
         self.assertEqual('epic', info['type'])
         self.assertEqual('new', info['status'])
         # The extended field set must be present so the web UI can render
-        # the Component / Owner / Modified columns.
+        # the Component / Owner / Modified columns and colour rows by
+        # priority (prioN classes).
         for key in ('id', 'summary', 'component', 'type', 'status',
-                    'owner', 'changetime'):
+                    'owner', 'changetime', 'priority', 'priority_value'):
             self.assertIn(key, info)
         self.assertIsNone(self.epics.get_ticket_summary(self.env, 8888))
+
+    def test_get_ticket_summary_priority_value(self):
+        # A ticket with an explicit priority must report the matching enum
+        # value so the UI can apply the Trac prioN row-colour class.
+        ticket = Ticket(self.env)
+        ticket['summary'] = 'High prio'
+        ticket['type'] = 'task'
+        ticket['priority'] = 'blocker'  # highest priority -> enum value '1'
+        tid = ticket.insert()
+        info = self.epics.get_ticket_summary(self.env, tid)
+        self.assertEqual('blocker', info['priority'])
+        self.assertEqual('1', str(info['priority_value']))
 
     # -- migration -----------------------------------------------------
     def test_migration_from_legacy_custom_field(self):

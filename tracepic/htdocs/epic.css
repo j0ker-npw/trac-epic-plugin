@@ -1,20 +1,51 @@
 /* TracEpicPlugin styles */
 
+/* Match the visual style of the ticket Description box (#ticketbox):
+   same pale-yellow background, border, rounded corners and padding. */
 #epic-links {
+    background: #ffd;
+    border: 1px solid #dd9;
+    border-radius: .4em;
     margin: 1em 0;
-    padding: 0.5em 0;
-    border-top: 1px solid #d7d7d7;
+    padding: .5em 1em;
+    position: relative;
 }
 
+/* The section title mirrors the "Description" heading
+   (#ticketbox div.description h2). */
 #epic-links .epic-links-title {
-    margin: 0.5em 0;
-    font-size: 110%;
+    margin: .3em 0 .4em;
+    color: #663;
+    font-size: 120%;
+    font-weight: 600;
+    border-bottom: 1px solid #dd9;
 }
 
 #epic-links table.epic-links-table {
     width: 100%;
     margin-bottom: 0.5em;
 }
+
+/* Colour table rows by ticket priority, mirroring Trac's default
+   report/query scheme (normally defined in report.css, which is NOT loaded
+   on the ticket page).  odd rows use the base prioN colour, even rows the
+   lighter even.prioN variant.  These id-scoped rules override the plain
+   listing stripes from trac.css. */
+#epic-links table.epic-links-table tbody tr.prio1 { background: #fdc; border-color: #e88; }
+#epic-links table.epic-links-table tbody tr.even.prio1 { background: #fed; border-color: #e99; }
+#epic-links table.epic-links-table tbody tr.prio2 { background: #ffb; border-color: #eea; }
+#epic-links table.epic-links-table tbody tr.even.prio2 { background: #ffd; border-color: #dd8; }
+#epic-links table.epic-links-table tbody tr.prio3 { background: #fbfbfb; border-color: #ddd; }
+#epic-links table.epic-links-table tbody tr.even.prio3 { background: #f6f6f6; border-color: #ccc; }
+#epic-links table.epic-links-table tbody tr.prio4 { background: #e7ffff; border-color: #cee; }
+#epic-links table.epic-links-table tbody tr.even.prio4 { background: #dff; border-color: #bee; }
+#epic-links table.epic-links-table tbody tr.prio5 { background: #e7eeff; border-color: #cde; }
+#epic-links table.epic-links-table tbody tr.even.prio5 { background: #dde7ff; }
+#epic-links table.epic-links-table tbody tr.prio6 { background: #f0f0f0; border-color: #ddd; }
+#epic-links table.epic-links-table tbody tr.even.prio6 { background: #f7f7f7; }
+
+/* Closed tickets: strike through the id link (matches a.closed in trac.css). */
+#epic-links table.epic-links-table a.closed { text-decoration: line-through; }
 
 #epic-links .epic-col-id { white-space: nowrap; }
 #epic-links .epic-col-component { white-space: nowrap; }
