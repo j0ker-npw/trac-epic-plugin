@@ -16,6 +16,26 @@ standards-based build instead::
     pip install dist/TracEpicPlugin-*.whl
 """
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
-setup()
+# When bdist_egg is invoked, setuptools does not reliably read pyproject.toml
+# in legacy mode.  We must explicitly declare packages and data files here.
+setup(
+    name='TracEpicPlugin',
+    version='1.2.0',
+    packages=find_packages(exclude=['tests', 'tests.*']),
+    package_data={
+        'tracepic': [
+            'templates/*.html',
+            'htdocs/*.css',
+            'htdocs/*.js',
+        ],
+    },
+    entry_points={
+        'trac.plugins': [
+            'tracepic.api = tracepic.api',
+            'tracepic.web_ui = tracepic.web_ui',
+            'tracepic.xmlrpc = tracepic.xmlrpc',
+        ],
+    },
+)
