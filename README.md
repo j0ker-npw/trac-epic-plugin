@@ -33,15 +33,35 @@ regular tickets:
 
 ### Installation
 
-```bash
-# From the plugin source directory
-pip install -e .
+**Method 1: System-wide Trac (Debian/Ubuntu from apt) — Recommended**
 
-# Upgrade the Trac environment (creates the epic_links table and runs
-# the one-time data migration)
+When Trac is installed from system packages (`apt install trac`), Python is externally managed (PEP 668). Install the plugin directly into your Trac environment:
+
+```bash
+cd /path/to/trac-epic-plugin
+
+# Build the egg file
+python3 setup.py bdist_egg
+
+# Copy to your Trac environment's plugins directory
+sudo cp dist/TracEpicPlugin-1.0.0-py3.*.egg /path/to/trac-env/plugins/
+
+# Apply database migration
 trac-admin /path/to/trac-env upgrade
 
-# Restart the web front-end (mod_wsgi / tracd / etc.)
+# Restart the web front-end (Apache/mod_wsgi)
+sudo systemctl restart apache2
+```
+
+**Method 2: Trac in virtual environment**
+
+If Trac is installed in a virtual environment:
+
+```bash
+source /path/to/trac/venv/bin/activate
+pip install -e /path/to/trac-epic-plugin
+trac-admin /path/to/trac-env upgrade
+# Restart your web server
 ```
 
 ### Configuration (`trac.ini`)
@@ -169,15 +189,35 @@ TracEpicPlugin добавляет связь «многие-ко-многим» 
 
 ### Установка
 
-```bash
-# Из каталога с исходниками плагина
-pip install -e .
+**Метод 1: Системный Trac (Debian/Ubuntu из apt) — рекомендуется**
 
-# Обновить окружение Trac (создаёт таблицу epic_links и выполняет
-# однократную миграцию данных)
+Когда Trac установлен из системных пакетов (`apt install trac`), Python находится под управлением системы (PEP 668). Устанавливайте плагин напрямую в директорию окружения Trac:
+
+```bash
+cd /path/to/trac-epic-plugin
+
+# Собрать egg-файл
+python3 setup.py bdist_egg
+
+# Скопировать в директорию plugins вашего окружения Trac
+sudo cp dist/TracEpicPlugin-1.0.0-py3.*.egg /path/to/trac-env/plugins/
+
+# Применить миграцию БД
 trac-admin /path/to/trac-env upgrade
 
-# Перезапустить веб-сервер (mod_wsgi / tracd / и т.д.)
+# Перезапустить веб-сервер (Apache/mod_wsgi)
+sudo systemctl restart apache2
+```
+
+**Метод 2: Trac в виртуальном окружении**
+
+Если Trac установлен в виртуальном окружении:
+
+```bash
+source /path/to/trac/venv/bin/activate
+pip install -e /path/to/trac-epic-plugin
+trac-admin /path/to/trac-env upgrade
+# Перезапустить веб-сервер
 ```
 
 ### Настройка (`trac.ini`)
