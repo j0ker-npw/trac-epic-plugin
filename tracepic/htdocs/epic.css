@@ -1,0 +1,76 @@
+/* TracEpicPlugin styles */
+
+#epic-links {
+    margin: 1em 0;
+    padding: 0.5em 0;
+    border-top: 1px solid #d7d7d7;
+}
+
+#epic-links .epic-links-title {
+    margin: 0.5em 0;
+    font-size: 110%;
+}
+
+#epic-links table.epic-links-table {
+    width: 100%;
+    margin-bottom: 0.5em;
+}
+
+#epic-links .epic-col-id { white-space: nowrap; }
+#epic-links .epic-col-actions { width: 5em; text-align: right; }
+
+#epic-links .epic-empty {
+    color: #888;
+    font-style: italic;
+    margin: 0.3em 0 0.8em;
+}
+
+#epic-links .epic-add-form {
+    position: relative;
+    margin-top: 0.5em;
+}
+
+#epic-links .epic-add-input {
+    min-width: 24em;
+    padding: 2px 4px;
+}
+
+#epic-links .epic-autocomplete {
+    display: none;
+    position: absolute;
+    z-index: 1000;
+    background: #fff;
+    border: 1px solid #b0b0b0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    max-height: 16em;
+    overflow-y: auto;
+    min-width: 24em;
+}
+
+#epic-links .epic-ac-item {
+    padding: 3px 8px;
+    cursor: pointer;
+}
+
+#epic-links .epic-ac-item:hover {
+    background: #eef3ff;
+}
+
+#epic-links .epic-remove-btn,
+#epic-links .epic-add-btn {
+    cursor: pointer;
+}
+
+#epic-links .epic-add-btn[disabled] {
+    cursor: default;
+    opacity: 0.6;
+}
+
+#epic-links .epic-add-msg {
+    margin-left: 0.6em;
+    color: #2a7d2a;
+}
+
+#epic-links .epic-add-msg.epic-error {
+    color: #b00;
+}

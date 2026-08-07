@@ -1,0 +1,90 @@
+## Jinja2 fragment for TracEpicPlugin (Trac 1.6).
+##
+## Rendered server side by EpicWebUI._inject_epic_section and inserted into
+## the ticket page by epic.js.  Expected context variables:
+##   ticket_id   : int   - the ticket currently being viewed
+##   is_epic     : bool  - True when the viewed ticket is of type 'epic'
+##   can_modify  : bool  - True when the user has TICKET_MODIFY
+##   linked      : list  - dicts {id, summary, status, type}
+<div id="epic-links" class="epic-links"
+     data-ticket-id="${ticket_id}"
+     data-is-epic="${'1' if is_epic else '0'}">
+  <h3 class="epic-links-title">
+    #     if is_epic:
+    Linked Tickets
+    #     else:
+    Epics
+    #     endif
+  </h3>
+
+  <table class="listing epic-links-table"
+         # if not linked:
+         style="display:none"
+         # endif
+         >
+    <thead>
+      <tr>
+        <th class="epic-col-id">Ticket</th>
+        <th class="epic-col-summary">Summary</th>
+        <th class="epic-col-status">Status</th>
+        <th class="epic-col-type">Type</th>
+        # if can_modify:
+        <th class="epic-col-actions"></th>
+        # endif
+      </tr>
+    </thead>
+    <tbody>
+      # for item in linked:
+      <tr data-link-id="${item.id}">
+        <td class="epic-col-id">
+          <a href="${href.ticket(item.id)}" class="${item.status}">${'#%s' % item.id}</a>
+        </td>
+        <td class="epic-col-summary">
+          <a href="${href.ticket(item.id)}">${item.summary}</a>
+        </td>
+        <td class="epic-col-status">${item.status}</td>
+        <td class="epic-col-type">${item.type}</td>
+        # if can_modify:
+        <td class="epic-col-actions">
+          <button type="button" class="epic-remove-btn"
+                  data-other-id="${item.id}"
+                  title="Remove this link">Remove</button>
+        </td>
+        # endif
+      </tr>
+      # endfor
+    </tbody>
+  </table>
+
+  <p class="epic-empty"
+     # if linked:
+     style="display:none"
+     # endif
+     >
+    # if is_epic:
+    No tickets are linked to this epic yet.
+    # else:
+    This ticket does not belong to any epic yet.
+    # endif
+  </p>
+
+  # if can_modify:
+  <div class="epic-add-form">
+    <label for="epic-add-input">
+      # if is_epic:
+      Link a ticket:
+      # else:
+      Add to epic:
+      # endif
+    </label>
+    <input type="text" id="epic-add-input" class="epic-add-input"
+           autocomplete="off"
+           placeholder="Type #id or summary..." />
+    <input type="hidden" id="epic-add-selected" value="" />
+    <button type="button" id="epic-add-btn" class="epic-add-btn"
+            disabled="disabled">Add link</button>
+    <div id="epic-autocomplete" class="epic-autocomplete"></div>
+    <span id="epic-add-msg" class="epic-add-msg"></span>
+  </div>
+  # endif
+</div>
