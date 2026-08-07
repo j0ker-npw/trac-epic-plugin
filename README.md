@@ -40,8 +40,8 @@ When Trac is installed from system packages (`apt install trac`), Python is exte
 ```bash
 cd /path/to/trac-epic-plugin
 
-# Build the egg file
-python3 setup.py bdist_egg
+# Build the egg file (use -B to avoid byte-compilation issues)
+python3 -B setup.py bdist_egg
 
 # Copy to your Trac environment's plugins directory
 sudo cp dist/TracEpicPlugin-1.0.0-py3.*.egg /path/to/trac-env/plugins/
@@ -208,8 +208,8 @@ TracEpicPlugin добавляет связь «многие-ко-многим» 
 ```bash
 cd /path/to/trac-epic-plugin
 
-# Собрать egg-файл
-python3 setup.py bdist_egg
+# Собрать egg-файл (используйте -B для избежания проблем с байткомпиляцией)
+python3 -B setup.py bdist_egg
 
 # Скопировать в директорию plugins вашего окружения Trac
 sudo cp dist/TracEpicPlugin-1.0.0-py3.*.egg /path/to/trac-env/plugins/

@@ -4,6 +4,17 @@ All notable changes to TracEpicPlugin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.1] - 2026-08-07
+
+### Fixed
+- Removed deprecated `License :: OSI Approved :: BSD License` classifier in favor of SPDX `BSD-3-Clause` license expression
+- Fixed packaging warnings about missing `tracepic.htdocs` and `tracepic.templates` by using `packages = find:` in setup.cfg
+- Added explicit `LICENSE` file to package distribution
+- Updated build instructions to use `python3 -B setup.py bdist_egg` to avoid byte-compilation permission issues
+
+### Changed
+- Enhanced Python version classifiers to explicitly list 3.9 through 3.13
+
 ## [1.0.0] - 2026-08-07
 
 ### Added
