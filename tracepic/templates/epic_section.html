@@ -5,7 +5,8 @@
 ##   ticket_id   : int   - the ticket currently being viewed
 ##   is_epic     : bool  - True when the viewed ticket is of type 'epic'
 ##   can_modify  : bool  - True when the user has TICKET_MODIFY
-##   linked      : list  - dicts {id, summary, status, type}
+##   linked      : list  - dicts {id, summary, component, type, status,
+##                                 owner, modified}
 <div id="epic-links" class="epic-links"
      data-ticket-id="${ticket_id}"
      data-is-epic="${'1' if is_epic else '0'}">
@@ -26,8 +27,11 @@
       <tr>
         <th class="epic-col-id">Ticket</th>
         <th class="epic-col-summary">Summary</th>
-        <th class="epic-col-status">Status</th>
+        <th class="epic-col-component">Component</th>
         <th class="epic-col-type">Type</th>
+        <th class="epic-col-status">Status</th>
+        <th class="epic-col-owner">Owner</th>
+        <th class="epic-col-modified">Modified</th>
         # if can_modify:
         <th class="epic-col-actions"></th>
         # endif
@@ -42,8 +46,11 @@
         <td class="epic-col-summary">
           <a href="${href.ticket(item.id)}">${item.summary}</a>
         </td>
-        <td class="epic-col-status">${item.status}</td>
+        <td class="epic-col-component">${item.component}</td>
         <td class="epic-col-type">${item.type}</td>
+        <td class="epic-col-status">${item.status}</td>
+        <td class="epic-col-owner">${item.owner}</td>
+        <td class="epic-col-modified">${item.modified}</td>
         # if can_modify:
         <td class="epic-col-actions">
           <button type="button" class="epic-remove-btn"

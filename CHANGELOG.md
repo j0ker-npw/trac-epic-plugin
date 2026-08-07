@@ -4,6 +4,24 @@ All notable changes to TracEpicPlugin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-08-07
+
+### Changed
+- **Expanded the linked-tickets table** in both the "Epics" section (on
+  regular tickets) and the "Linked Tickets" section (on epic tickets). The
+  columns are now displayed in this order:
+  **Ticket · Summary · Component · Type · Status · Owner · Modified · (Remove)**.
+- `EpicLinkSystem.get_ticket_summary()` now also returns `component`,
+  `owner` and the raw `changetime` alongside `summary`, `type` and `status`.
+- The web UI formats `changetime` into a localized **Modified** string using
+  the viewer's timezone (`user_time` + `format_datetime`) and normalises
+  empty `component`/`owner` values so cells never render `None`.
+- Server-rendered template (`epic_section.html`) and the AJAX re-render path
+  (`epic.js`) both build the new column set, so the table stays consistent
+  after adding/removing links without a page reload.
+- Added per-column CSS classes (`epic-col-component`, `epic-col-owner`,
+  `epic-col-modified`, …) in `epic.css`.
+
 ## [1.0.2] - 2026-08-07
 
 ### Changed

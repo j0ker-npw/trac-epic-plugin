@@ -226,12 +226,27 @@ class EpicLinkSystem(Component):
         return False
 
     def get_ticket_summary(self, env, ticket_id):
-        """Return ``(summary, status, type)`` for *ticket_id* or ``None``."""
-        for summary, status, ttype in env.db_query("""
-                SELECT summary, status, type FROM ticket WHERE id=%s
+        """Return a dict describing *ticket_id*, or ``None`` if it is gone.
+
+        The returned mapping contains the columns needed to render the
+        epic/linked-tickets table: ``id``, ``summary``, ``component``,
+        ``type``, ``status``, ``owner`` and the raw ``changetime`` (64-bit
+        microsecond integer, may be ``None``).  The web UI formats
+        ``changetime`` into a human readable ``modified`` string using the
+        viewer's timezone.
+        """
+        for (summary, component, ttype, status, owner,
+             changetime) in env.db_query("""
+                SELECT summary, component, type, status, owner, changetime
+                FROM ticket WHERE id=%s
                 """, (int(ticket_id),)):
-            return {'id': int(ticket_id), 'summary': summary,
-                    'status': status, 'type': ttype}
+            return {'id': int(ticket_id),
+                    'summary': summary,
+                    'component': component,
+                    'type': ttype,
+                    'status': status,
+                    'owner': owner,
+                    'changetime': changetime}
         return None
 
     # ------------------------------------------------------------------

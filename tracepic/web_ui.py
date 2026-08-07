@@ -24,6 +24,7 @@ from trac.perm import PermissionError
 from trac.web.api import IRequestFilter, IRequestHandler, RequestDone
 from trac.web.chrome import (ITemplateProvider, Chrome, add_script,
                              add_script_data, add_stylesheet)
+from trac.util.datefmt import from_utimestamp, format_datetime, user_time
 
 from tracepic.api import EpicLinkSystem
 
@@ -79,7 +80,7 @@ class EpicWebUI(Component):
         for lid in linked_ids:
             info = self.epics.get_ticket_summary(self.env, lid)
             if info:
-                linked.append(info)
+                linked.append(self._decorate(req, info))
 
         frag_data = {
             'ticket_id': ticket_id,
@@ -253,8 +254,32 @@ class EpicWebUI(Component):
         for lid in ids:
             linfo = self.epics.get_ticket_summary(self.env, lid)
             if linfo:
-                payload.append(linfo)
+                payload.append(self._decorate(req, linfo))
         return payload
+
+    def _decorate(self, req, info):
+        """Add display-ready fields to a ticket-summary dict.
+
+        Formats the raw ``changetime`` microsecond timestamp into a
+        ``modified`` string using the viewer's timezone/locale and
+        normalises ``None`` values to empty strings so the table never
+        renders the literal ``None``.
+        """
+        if info is None:
+            return info
+        changetime = info.get('changetime')
+        modified = ''
+        if changetime:
+            try:
+                modified = user_time(req, format_datetime,
+                                     from_utimestamp(changetime))
+            except Exception:
+                modified = ''
+        info['modified'] = modified
+        for key in ('summary', 'component', 'type', 'status', 'owner'):
+            if info.get(key) is None:
+                info[key] = ''
+        return info
 
     def _send_json(self, req, obj, status=200):
         """Serialise *obj* to JSON and end the request."""

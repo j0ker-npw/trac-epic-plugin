@@ -138,6 +138,12 @@ class EpicLinkSystemTestCase(unittest.TestCase):
         info = self.epics.get_ticket_summary(self.env, t1)
         self.assertEqual('A summary', info['summary'])
         self.assertEqual('epic', info['type'])
+        self.assertEqual('new', info['status'])
+        # The extended field set must be present so the web UI can render
+        # the Component / Owner / Modified columns.
+        for key in ('id', 'summary', 'component', 'type', 'status',
+                    'owner', 'changetime'):
+            self.assertIn(key, info)
         self.assertIsNone(self.epics.get_ticket_summary(self.env, 8888))
 
     # -- migration -----------------------------------------------------

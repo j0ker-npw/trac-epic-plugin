@@ -17,6 +17,11 @@
 }
 
 #epic-links .epic-col-id { white-space: nowrap; }
+#epic-links .epic-col-component { white-space: nowrap; }
+#epic-links .epic-col-type { white-space: nowrap; }
+#epic-links .epic-col-status { white-space: nowrap; }
+#epic-links .epic-col-owner { white-space: nowrap; }
+#epic-links .epic-col-modified { white-space: nowrap; }
 #epic-links .epic-col-actions { width: 5em; text-align: right; }
 
 #epic-links .epic-empty {

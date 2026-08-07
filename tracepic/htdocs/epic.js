@@ -70,8 +70,15 @@
           .text("#" + item.id)));
       $tr.append($("<td/>").addClass("epic-col-summary").append(
         $("<a/>").attr("href", url).text(item.summary)));
-      $tr.append($("<td/>").addClass("epic-col-status").text(item.status));
-      $tr.append($("<td/>").addClass("epic-col-type").text(item.type));
+      $tr.append($("<td/>").addClass("epic-col-component")
+        .text(item.component || ""));
+      $tr.append($("<td/>").addClass("epic-col-type").text(item.type || ""));
+      $tr.append($("<td/>").addClass("epic-col-status")
+        .text(item.status || ""));
+      $tr.append($("<td/>").addClass("epic-col-owner")
+        .text(item.owner || ""));
+      $tr.append($("<td/>").addClass("epic-col-modified")
+        .text(item.modified || ""));
       if (conf.can_modify) {
         var $btn = $("<button/>").attr("type", "button")
           .addClass("epic-remove-btn")
