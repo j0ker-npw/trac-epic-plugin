@@ -53,6 +53,8 @@
 #epic-links .epic-col-status { white-space: nowrap; }
 #epic-links .epic-col-owner { white-space: nowrap; }
 #epic-links .epic-col-modified { white-space: nowrap; }
+/* Hint that the relative "... ago" text reveals the full date on hover. */
+#epic-links .epic-col-modified span[title] { cursor: help; }
 #epic-links .epic-col-actions { width: 5em; text-align: right; }
 
 #epic-links .epic-empty {

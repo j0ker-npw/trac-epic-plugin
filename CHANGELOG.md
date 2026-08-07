@@ -4,6 +4,21 @@ All notable changes to TracEpicPlugin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.1] - 2026-08-07
+
+### Changed
+- **The "Modified" column now uses Trac's relative date style** in both the
+  "Epics" and "Linked Tickets" tables: it shows a relative label such as
+  `3 hours ago` (or `in 2 days`), with the full localized date/time revealed
+  as a tooltip on hover -- matching Trac's own `pretty_dateinfo` output.
+- `EpicWebUI._decorate()` now emits two fields for the modified timestamp:
+  `modified` (the relative "... ago" label) and `modified_title` (the
+  absolute date/time used for the hover tooltip).
+- Template (`epic_section.html`) and JavaScript (`epic.js`) wrap the value in
+  a `<span title="...">` so both the server-rendered and AJAX-updated rows
+  display the tooltip identically.
+- `epic.css` adds a `cursor: help` hint on the modified cell's span.
+
 ## [1.2.0] - 2026-08-07
 
 ### Changed

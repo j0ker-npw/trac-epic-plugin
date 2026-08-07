@@ -22,7 +22,7 @@ from setuptools import setup, find_packages
 # in legacy mode.  We must explicitly declare packages and data files here.
 setup(
     name='TracEpicPlugin',
-    version='1.2.0',
+    version='1.2.1',
     packages=find_packages(exclude=['tests', 'tests.*']),
     package_data={
         'tracepic': [

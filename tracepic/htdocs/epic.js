@@ -84,8 +84,11 @@
         .text(item.status || ""));
       $tr.append($("<td/>").addClass("epic-col-owner")
         .text(item.owner || ""));
-      $tr.append($("<td/>").addClass("epic-col-modified")
-        .text(item.modified || ""));
+      // Relative "... ago" text with the absolute date/time as a hover
+      // tooltip, matching Trac's pretty_dateinfo output.
+      $tr.append($("<td/>").addClass("epic-col-modified").append(
+        $("<span/>").attr("title", item.modified_title || "")
+          .text(item.modified || "")));
       if (conf.can_modify) {
         var $btn = $("<button/>").attr("type", "button")
           .addClass("epic-remove-btn")

@@ -24,7 +24,9 @@ from trac.perm import PermissionError
 from trac.web.api import IRequestFilter, IRequestHandler, RequestDone
 from trac.web.chrome import (ITemplateProvider, Chrome, add_script,
                              add_script_data, add_stylesheet)
-from trac.util.datefmt import from_utimestamp, format_datetime, user_time
+from trac.util.datefmt import (from_utimestamp, format_datetime, user_time,
+                               pretty_timedelta, datetime_now, localtz)
+from trac.util.translation import _
 
 from tracepic.api import EpicLinkSystem
 
@@ -260,22 +262,38 @@ class EpicWebUI(Component):
     def _decorate(self, req, info):
         """Add display-ready fields to a ticket-summary dict.
 
-        Formats the raw ``changetime`` microsecond timestamp into a
-        ``modified`` string using the viewer's timezone/locale and
-        normalises ``None`` values to empty strings so the table never
-        renders the literal ``None``.
+        Formats the raw ``changetime`` microsecond timestamp into Trac's
+        relative "... ago" style (e.g. ``3 hours ago``) for ``modified``,
+        with the full localized date/time exposed as ``modified_title`` so
+        the UI can show it as a hover tooltip -- mirroring Trac's own
+        ``pretty_dateinfo(date, format='relative')`` output.  ``None``
+        values are normalised to empty strings so the table never renders
+        the literal ``None``.
         """
         if info is None:
             return info
         changetime = info.get('changetime')
         modified = ''
+        modified_title = ''
         if changetime:
             try:
-                modified = user_time(req, format_datetime,
-                                     from_utimestamp(changetime))
+                dt = from_utimestamp(changetime)
+                # Absolute date/time in the viewer's timezone/locale
+                # (shown on hover, identical to Trac's tooltip).
+                modified_title = user_time(req, format_datetime, dt)
+                # Relative "... ago" / "in ..." label, exactly like Trac's
+                # pretty_dateinfo(format='relative').
+                now = datetime_now(localtz)
+                relative = pretty_timedelta(dt, now)
+                if dt > now:
+                    modified = _("in %(relative)s", relative=relative)
+                else:
+                    modified = _("%(relative)s ago", relative=relative)
             except Exception:
                 modified = ''
+                modified_title = ''
         info['modified'] = modified
+        info['modified_title'] = modified_title
         # Priority value drives the Trac ``prioN`` row colour class.  Keep it
         # as a bare string (e.g. '1'..'6') or '' when undefined, mirroring
         # Trac's own ``'prio' + (result._priority_value or '')`` logic.
