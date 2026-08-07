@@ -64,6 +64,18 @@ trac-admin /path/to/trac-env upgrade
 # Restart your web server
 ```
 
+**Method 3: System-wide pip (not recommended)**
+
+⚠️ **Warning**: This method bypasses Python's externally-managed environment protection (PEP 668) and may break system packages. Use only if you understand the risks.
+
+```bash
+cd /path/to/trac-epic-plugin
+pip install -e . --break-system-packages
+
+trac-admin /path/to/trac-env upgrade
+sudo systemctl restart apache2
+```
+
 ### Configuration (`trac.ini`)
 
 Enable the components:
@@ -218,6 +230,18 @@ source /path/to/trac/venv/bin/activate
 pip install -e /path/to/trac-epic-plugin
 trac-admin /path/to/trac-env upgrade
 # Перезапустить веб-сервер
+```
+
+**Метод 3: System-wide pip (не рекомендуется)**
+
+⚠️ **Предупреждение**: Этот метод обходит защиту внешне-управляемого окружения Python (PEP 668) и может нарушить работу системных пакетов. Используйте только если понимаете риски.
+
+```bash
+cd /path/to/trac-epic-plugin
+pip install -e . --break-system-packages
+
+trac-admin /path/to/trac-env upgrade
+sudo systemctl restart apache2
 ```
 
 ### Настройка (`trac.ini`)
