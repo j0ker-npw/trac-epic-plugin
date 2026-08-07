@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=77.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "TracEpicPlugin"
+version = "1.0.2"
+description = "Epic <-> ticket linking for Trac 1.6 (M:N relations, changelog, XML-RPC)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+authors = [{ name = "TracEpicPlugin Contributors" }]
+keywords = ["trac", "plugin", "epic", "tickets", "issue-tracking"]
+dependencies = ["Trac>=1.6"]
+classifiers = [
+    "Framework :: Trac",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[project.urls]
+Homepage = "https://github.com/j0ker-npw/trac-epic-plugin"
+Repository = "https://github.com/j0ker-npw/trac-epic-plugin"
+
+[project.entry-points."trac.plugins"]
+"tracepic.api" = "tracepic.api"
+"tracepic.web_ui" = "tracepic.web_ui"
+"tracepic.xmlrpc" = "tracepic.xmlrpc"
+
+[tool.setuptools]
+zip-safe = false
+
+# ``namespaces = true`` makes setuptools treat the data-only sub-directories
+# (``tracepic/htdocs`` and ``tracepic/templates``) as part of the distribution
+# without emitting the "Package would be ignored" discovery warning.
+[tool.setuptools.packages.find]
+include = ["tracepic*"]
+namespaces = true
+
+[tool.setuptools.package-data]
+tracepic = ["templates/*.html", "htdocs/*.js", "htdocs/*.css"]

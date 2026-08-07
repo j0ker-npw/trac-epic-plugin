@@ -4,6 +4,31 @@ All notable changes to TracEpicPlugin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.2] - 2026-08-07
+
+### Changed
+- **Migrated packaging to `pyproject.toml` (PEP 621 / PEP 517/518)** — the
+  project now declares its metadata, build backend and entry points in a
+  single standards-based file; `setup.cfg` has been removed.
+- License is now declared as an SPDX expression (`License-Expression:
+  BSD-3-Clause`, PEP 639) instead of the deprecated license classifier.
+
+### Fixed
+- Silenced the `Package 'tracepic.htdocs' / 'tracepic.templates' is absent
+  from the packages configuration` warnings by enabling namespace discovery
+  (`[tool.setuptools.packages.find] namespaces = true`). The data
+  directories are packaged correctly and no longer trigger discovery
+  warnings under modern setuptools (>= 77).
+- `python -m build` now produces a **warning-free** universal wheel and sdist.
+
+### Notes
+- Building an `*.egg` for Trac's `plugins/` directory still uses the legacy
+  `setup.py bdist_egg` command, which emits a single unavoidable
+  `setup.py install is deprecated` notice. This is intrinsic to the egg
+  format (which Trac requires for drop-in plugins) and is harmless. For
+  virtual-environment installs use the wheel produced by `python -m build`,
+  which is completely warning-free.
+
 ## [1.0.1] - 2026-08-07
 
 ### Fixed

@@ -40,11 +40,14 @@ When Trac is installed from system packages (`apt install trac`), Python is exte
 ```bash
 cd /path/to/trac-epic-plugin
 
-# Build the egg file (use -B to avoid byte-compilation issues)
+# Build the egg (use -B to avoid pyc permission issues on some systems).
+# IMPORTANT: build with the SAME Python that runs Trac, so the egg gets the
+# matching -pyX.Y tag (e.g. on Python 3.13 you get ...-py3.13.egg). Trac
+# ignores eggs whose Python tag does not match the running interpreter.
 python3 -B setup.py bdist_egg
 
-# Copy to your Trac environment's plugins directory
-sudo cp dist/TracEpicPlugin-1.0.0-py3.*.egg /path/to/trac-env/plugins/
+# Copy the freshly built egg into your Trac environment's plugins directory
+sudo cp dist/TracEpicPlugin-1.0.2-py3.*.egg /path/to/trac-env/plugins/
 
 # Apply database migration
 trac-admin /path/to/trac-env upgrade
@@ -53,13 +56,28 @@ trac-admin /path/to/trac-env upgrade
 sudo systemctl restart apache2
 ```
 
-**Method 2: Trac in virtual environment**
+> **Note on the remaining warning.** `bdist_egg` prints a single
+> `setup.py install is deprecated` notice. This is intrinsic to the egg
+> format (which Trac requires for drop-in `plugins/` archives) and is
+> harmless — the produced egg is valid. The old `tracepic.htdocs` /
+> `tracepic.templates` "Package would be ignored" warnings are **gone** as
+> of v1.0.2.
 
-If Trac is installed in a virtual environment:
+**Method 2: Trac in virtual environment (fully warning-free)**
+
+If Trac runs inside a virtualenv, use the standards-based build — it produces
+a universal wheel with **zero** warnings:
 
 ```bash
 source /path/to/trac/venv/bin/activate
-pip install -e /path/to/trac-epic-plugin
+
+cd /path/to/trac-epic-plugin
+pip install build           # once
+python3 -m build            # -> dist/TracEpicPlugin-1.0.2-py3-none-any.whl
+pip install dist/TracEpicPlugin-1.0.2-py3-none-any.whl
+
+# (editable install also works: pip install -e .)
+
 trac-admin /path/to/trac-env upgrade
 # Restart your web server
 ```
@@ -208,11 +226,14 @@ TracEpicPlugin добавляет связь «многие-ко-многим» 
 ```bash
 cd /path/to/trac-epic-plugin
 
-# Собрать egg-файл (используйте -B для избежания проблем с байткомпиляцией)
+# Собрать egg (флаг -B избавляет от проблем с правами на pyc).
+# ВАЖНО: собирайте тем же Python, под которым работает Trac, чтобы egg
+# получил соответствующий тег -pyX.Y (например, на Python 3.13 будет
+# ...-py3.13.egg). Trac игнорирует egg с несовпадающим тегом Python.
 python3 -B setup.py bdist_egg
 
-# Скопировать в директорию plugins вашего окружения Trac
-sudo cp dist/TracEpicPlugin-1.0.0-py3.*.egg /path/to/trac-env/plugins/
+# Скопировать собранный egg в директорию plugins вашего окружения Trac
+sudo cp dist/TracEpicPlugin-1.0.2-py3.*.egg /path/to/trac-env/plugins/
 
 # Применить миграцию БД
 trac-admin /path/to/trac-env upgrade
@@ -221,13 +242,27 @@ trac-admin /path/to/trac-env upgrade
 sudo systemctl restart apache2
 ```
 
-**Метод 2: Trac в виртуальном окружении**
+> **О единственном оставшемся предупреждении.** `bdist_egg` выводит одно
+> уведомление `setup.py install is deprecated`. Оно неотъемлемо для формата
+> egg (который Trac требует для plugins-директории) и безвредно — собранный
+> egg корректен. Прежние предупреждения `tracepic.htdocs` /
+> `tracepic.templates` («Package would be ignored») **устранены** в v1.0.2.
 
-Если Trac установлен в виртуальном окружении:
+**Метод 2: Trac в виртуальном окружении (полностью без предупреждений)**
+
+Если Trac работает в virtualenv, используйте стандартную сборку — она даёт
+универсальный wheel с **нулём** предупреждений:
 
 ```bash
 source /path/to/trac/venv/bin/activate
-pip install -e /path/to/trac-epic-plugin
+
+cd /path/to/trac-epic-plugin
+pip install build           # однократно
+python3 -m build            # -> dist/TracEpicPlugin-1.0.2-py3-none-any.whl
+pip install dist/TracEpicPlugin-1.0.2-py3-none-any.whl
+
+# (editable-установка тоже работает: pip install -e .)
+
 trac-admin /path/to/trac-env upgrade
 # Перезапустить веб-сервер
 ```
