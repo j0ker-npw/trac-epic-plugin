@@ -116,6 +116,27 @@ Ticket Types*, or `trac.ini`):
 The plugin serves its own static assets (`epic.js`, `epic.css`) and Jinja2
 template automatically; no extra template configuration is required.
 
+#### Table sorting & pagination (`[epic]`)
+
+The *Linked Tickets* / *Epics* table supports Trac-style column sorting
+(click a header to sort, click again to toggle direction) and pagination.
+Both are configurable:
+
+```ini
+[epic]
+# Default sort as <field>/<order>. field ∈ {id, summary, component, type,
+# status, owner, modified, priority}; order ∈ {asc, desc}.
+# For 'priority', 'desc' lists the most severe tickets first (blocker at top).
+linked_default_sort = priority/desc
+# Maximum rows per page; the table paginates when there are more links.
+linked_page_size = 10
+```
+
+If a value is omitted or invalid the defaults `priority/desc` and `10` are
+used.  The **Priority** column is shown as a compact colour-coded badge (its
+colour matches the row's priority) with the priority name revealed on hover,
+so it does not eat into the width of the Summary column.
+
 ### XML-RPC API
 
 Requires the [XmlRpcPlugin](https://trac-hacks.org/wiki/XmlRpcPlugin)
@@ -297,6 +318,29 @@ trac-admin /path/to/env ticket_type add epic
 
 Статические файлы (`epic.js`, `epic.css`) и Jinja2-шаблон плагин
 обслуживает сам — дополнительная настройка не нужна.
+
+#### Сортировка и постраничный вывод таблицы (`[epic]`)
+
+Таблица *Linked Tickets* / *Epics* поддерживает сортировку по клику на
+заголовок столбца (как в отчётах Trac; повторный клик меняет направление)
+и постраничный вывод. Оба параметра настраиваются:
+
+```ini
+[epic]
+# Сортировка по умолчанию в формате <поле>/<направление>.
+# поле ∈ {id, summary, component, type, status, owner, modified, priority};
+# направление ∈ {asc, desc}.
+# Для 'priority' значение 'desc' ставит самые важные тикеты первыми (blocker вверху).
+linked_default_sort = priority/desc
+# Максимальное число строк на странице; при превышении включается пагинация.
+linked_page_size = 10
+```
+
+Если параметр не задан или указан неверно, используются значения по
+умолчанию `priority/desc` и `10`. Столбец **Priority** отображается
+компактным цветным индикатором (цвет соответствует приоритету строки), а
+название приоритета показывается во всплывающей подсказке при наведении —
+чтобы не сокращать ширину столбца Summary.
 
 ### XML-RPC API
 

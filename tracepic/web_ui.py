@@ -20,6 +20,7 @@ import json
 import re
 
 from trac.core import Component, implements, TracError
+from trac.config import Option, IntOption
 from trac.perm import PermissionError
 from trac.web.api import IRequestFilter, IRequestHandler, RequestDone
 from trac.web.chrome import (ITemplateProvider, Chrome, add_script,
@@ -34,14 +35,65 @@ EPIC_TYPE = 'epic'
 
 _TICKET_PATH_RE = re.compile(r'^/ticket/(\d+)$')
 
+# Columns the linked-tickets table can be sorted by (client side).  Kept in
+# sync with the sortable headers in ``epic_section.html`` and the comparator
+# in ``epic.js``.
+SORTABLE_FIELDS = ('id', 'summary', 'component', 'type', 'status', 'owner',
+                   'modified', 'priority')
+
+DEFAULT_SORT_FIELD = 'priority'
+DEFAULT_SORT_ORDER = 'desc'
+DEFAULT_PAGE_SIZE = 10
+
 
 class EpicWebUI(Component):
     """Ticket page integration and AJAX endpoints for epic links."""
 
     implements(IRequestFilter, IRequestHandler, ITemplateProvider)
 
+    # -- Configuration (``[epic]`` section of trac.ini) ----------------
+    linked_default_sort = Option(
+        'epic', 'linked_default_sort', '%s/%s' % (DEFAULT_SORT_FIELD,
+                                                  DEFAULT_SORT_ORDER),
+        doc="""Default sort order for the *Linked Tickets* / *Epics* table,
+        given as ``<field>/<order>``.  *field* is one of ``id``, ``summary``,
+        ``component``, ``type``, ``status``, ``owner``, ``modified`` or
+        ``priority``; *order* is ``asc`` or ``desc``.  For the ``priority``
+        column, ``desc`` lists the most severe tickets first (blocker at the
+        top).  Defaults to ``priority/desc``.""")
+
+    linked_page_size = IntOption(
+        'epic', 'linked_page_size', DEFAULT_PAGE_SIZE,
+        doc="""Maximum number of rows shown per page in the *Linked Tickets*
+        / *Epics* table.  When the number of linked tickets exceeds this
+        value the table is paginated with Trac-style page buttons.  Defaults
+        to 10.""")
+
     def __init__(self):
         self.epics = EpicLinkSystem(self.env)
+
+    # ------------------------------------------------------------------
+    # Configuration helpers
+    # ------------------------------------------------------------------
+    def _default_sort(self):
+        """Return the validated ``(field, order)`` default sort tuple."""
+        raw = (self.linked_default_sort or '').strip()
+        field, _sep, order = raw.partition('/')
+        field = field.strip().lower()
+        order = order.strip().lower()
+        if field not in SORTABLE_FIELDS:
+            field = DEFAULT_SORT_FIELD
+        if order not in ('asc', 'desc'):
+            order = DEFAULT_SORT_ORDER
+        return field, order
+
+    def _page_size(self):
+        """Return the validated page size (a positive integer)."""
+        try:
+            size = int(self.linked_page_size)
+        except (TypeError, ValueError):
+            size = DEFAULT_PAGE_SIZE
+        return size if size > 0 else DEFAULT_PAGE_SIZE
 
     # ------------------------------------------------------------------
     # IRequestFilter
@@ -84,14 +136,21 @@ class EpicWebUI(Component):
             if info:
                 linked.append(self._decorate(req, info))
 
+        sort_field, sort_order = self._default_sort()
+        page_size = self._page_size()
+
         frag_data = {
             'ticket_id': ticket_id,
             'is_epic': is_epic,
             'can_modify': can_modify,
-            'linked': linked,
+            'sort_field': sort_field,
+            'sort_order': sort_order,
         }
         # render_fragment produces just the fragment (no page skeleton),
-        # which is what we hand to the browser for injection.
+        # which is what we hand to the browser for injection.  The fragment
+        # is only the shell (title, sortable header, empty body, pager and
+        # add form); epic.js fills the body/pager from ``links`` below,
+        # applying the sort and pagination client side.
         html = str(Chrome(self.env).render_fragment(
             req, 'epic_section.html', frag_data))
 
@@ -102,6 +161,9 @@ class EpicWebUI(Component):
             'html': html,
             'form_token': req.form_token,
             'base_url': req.href.epic(),
+            'links': linked,
+            'sort': {'field': sort_field, 'order': sort_order},
+            'page_size': page_size,
         }})
         add_stylesheet(req, 'tracepic/epic.css')
         add_script(req, 'tracepic/epic.js')

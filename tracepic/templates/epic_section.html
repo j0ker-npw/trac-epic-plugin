@@ -1,12 +1,17 @@
 ## Jinja2 fragment for TracEpicPlugin (Trac 1.6).
 ##
 ## Rendered server side by EpicWebUI._inject_epic_section and inserted into
-## the ticket page by epic.js.  Expected context variables:
+## the ticket page by epic.js.  This fragment is only the *shell*: title,
+## sortable table header, an empty table body, a pager container and the add
+## form.  epic.js fills the body and pager from the ``links`` array handed
+## over via add_script_data, applying the sort order and pagination on the
+## client.  Expected context variables:
 ##   ticket_id   : int   - the ticket currently being viewed
 ##   is_epic     : bool  - True when the viewed ticket is of type 'epic'
 ##   can_modify  : bool  - True when the user has TICKET_MODIFY
-##   linked      : list  - dicts {id, summary, component, type, status,
-##                                 owner, modified}
+##   sort_field  : str   - default sort column (from trac.ini)
+##   sort_order  : str   - 'asc' | 'desc' (from trac.ini)
+# set columns = [('id', 'Ticket'), ('summary', 'Summary'), ('component', 'Component'), ('type', 'Type'), ('status', 'Status'), ('owner', 'Owner'), ('modified', 'Modified'), ('priority', 'P')]
 <div id="epic-links" class="epic-links"
      data-ticket-id="${ticket_id}"
      data-is-epic="${'1' if is_epic else '0'}">
@@ -18,57 +23,27 @@
     #     endif
   </h3>
 
-  <table class="listing tickets epic-links-table"
-         # if not linked:
-         style="display:none"
-         # endif
-         >
+  <table class="listing tickets epic-links-table" style="display:none">
     <thead>
       <tr>
-        <th class="epic-col-id">Ticket</th>
-        <th class="epic-col-summary">Summary</th>
-        <th class="epic-col-component">Component</th>
-        <th class="epic-col-type">Type</th>
-        <th class="epic-col-status">Status</th>
-        <th class="epic-col-owner">Owner</th>
-        <th class="epic-col-modified">Modified</th>
+        # for field, label in columns:
+        <th class="epic-col-${field} epic-sortable${' ' + sort_order if field == sort_field else ''}"
+            data-field="${field}">
+          <a href="#" class="epic-sort" data-field="${field}"
+             title="Sort by ${label}">${label}<span class="epic-sort-arrow"></span></a>
+        </th>
+        # endfor
         # if can_modify:
         <th class="epic-col-actions"></th>
         # endif
       </tr>
     </thead>
-    <tbody>
-      # for item in linked:
-      <tr data-link-id="${item.id}"
-          class="${('even' if loop.index0 % 2 else 'odd') + ' prio' + (item.priority_value or '')}">
-        <td class="epic-col-id">
-          <a href="${href.ticket(item.id)}"${({'class': 'closed'} if item.status == 'closed' else {})|htmlattr}>${'#%s' % item.id}</a>
-        </td>
-        <td class="epic-col-summary">
-          <a href="${href.ticket(item.id)}">${item.summary}</a>
-        </td>
-        <td class="epic-col-component">${item.component}</td>
-        <td class="epic-col-type">${item.type}</td>
-        <td class="epic-col-status">${item.status}</td>
-        <td class="epic-col-owner">${item.owner}</td>
-        <td class="epic-col-modified"><span title="${item.modified_title}">${item.modified}</span></td>
-        # if can_modify:
-        <td class="epic-col-actions">
-          <button type="button" class="epic-remove-btn"
-                  data-other-id="${item.id}"
-                  title="Remove this link">Remove</button>
-        </td>
-        # endif
-      </tr>
-      # endfor
-    </tbody>
+    <tbody></tbody>
   </table>
 
-  <p class="epic-empty"
-     # if linked:
-     style="display:none"
-     # endif
-     >
+  <div class="epic-paging" style="display:none"></div>
+
+  <p class="epic-empty" style="display:none">
     # if is_epic:
     No tickets are linked to this epic yet.
     # else:

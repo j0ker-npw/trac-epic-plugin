@@ -57,5 +57,42 @@ class DecorateModifiedTestCase(unittest.TestCase):
         self.assertEqual('', out['modified_title'])
 
 
+class SortAndPageConfigTestCase(unittest.TestCase):
+    """``[epic] linked_default_sort`` and ``linked_page_size`` parsing."""
+
+    def setUp(self):
+        self.env = EnvironmentStub(
+            enable=['trac.*', 'tracepic.*'], default_data=True)
+        self.ui = EpicWebUI(self.env)
+
+    def test_defaults_when_unset(self):
+        self.assertEqual(('priority', 'desc'), self.ui._default_sort())
+        self.assertEqual(10, self.ui._page_size())
+
+    def test_valid_values_are_honoured(self):
+        self.env.config.set('epic', 'linked_default_sort', 'summary/asc')
+        self.env.config.set('epic', 'linked_page_size', '25')
+        self.assertEqual(('summary', 'asc'), self.ui._default_sort())
+        self.assertEqual(25, self.ui._page_size())
+
+    def test_case_insensitive_and_whitespace(self):
+        self.env.config.set('epic', 'linked_default_sort', '  Modified / DESC ')
+        self.assertEqual(('modified', 'desc'), self.ui._default_sort())
+
+    def test_invalid_field_falls_back(self):
+        self.env.config.set('epic', 'linked_default_sort', 'bogus/asc')
+        self.assertEqual(('priority', 'asc'), self.ui._default_sort())
+
+    def test_invalid_order_falls_back(self):
+        self.env.config.set('epic', 'linked_default_sort', 'owner/sideways')
+        self.assertEqual(('owner', 'desc'), self.ui._default_sort())
+
+    def test_non_positive_page_size_falls_back(self):
+        self.env.config.set('epic', 'linked_page_size', '0')
+        self.assertEqual(10, self.ui._page_size())
+        self.env.config.set('epic', 'linked_page_size', '-5')
+        self.assertEqual(10, self.ui._page_size())
+
+
 if __name__ == '__main__':
     unittest.main()

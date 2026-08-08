@@ -57,6 +57,81 @@
 #epic-links .epic-col-modified span[title] { cursor: help; }
 #epic-links .epic-col-actions { width: 5em; text-align: right; }
 
+/* Narrow Priority column: a single coloured badge keeps the Summary column
+   wide instead of spending horizontal space on a text column. */
+#epic-links .epic-col-priority {
+    width: 3.5em;
+    text-align: center;
+    white-space: nowrap;
+}
+#epic-links .epic-prio-badge {
+    display: inline-block;
+    width: .85em;
+    height: .85em;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, .3);
+    vertical-align: middle;
+    cursor: help;
+}
+/* Badge fill colours: from most severe (blocker, red) to least (trivial). */
+#epic-links .epic-prio-badge.prio1 { background: #e66; }  /* blocker  */
+#epic-links .epic-prio-badge.prio2 { background: #f0b400; }  /* critical */
+#epic-links .epic-prio-badge.prio3 { background: #bbb; }  /* major    */
+#epic-links .epic-prio-badge.prio4 { background: #5bc; }  /* minor    */
+#epic-links .epic-prio-badge.prio5 { background: #79f; }  /* trivial  */
+#epic-links .epic-prio-badge.prio6 { background: #cbd; }
+
+/* Sortable column headers, styled like Trac's report/query tables:
+   clickable header links with an ascending / descending arrow. */
+#epic-links th.epic-sortable { cursor: pointer; }
+#epic-links th.epic-sortable a.epic-sort {
+    color: #663;
+    text-decoration: none;
+    display: inline-block;
+}
+#epic-links th.epic-sortable a.epic-sort:hover { text-decoration: underline; }
+#epic-links th.epic-sortable .epic-sort-arrow { font-size: 90%; color: #885; }
+#epic-links th.asc .epic-sort-arrow::after { content: " \25B4"; }  /* ▴ */
+#epic-links th.desc .epic-sort-arrow::after { content: " \25BE"; }  /* ▾ */
+
+/* Trac-style pagination controls under the table. */
+#epic-links .epic-paging {
+    margin: .2em 0 .8em;
+    font-size: 90%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .4em;
+}
+#epic-links .epic-paging-info { color: #666; }
+#epic-links .epic-paging-nav { white-space: nowrap; }
+#epic-links .epic-page-btn,
+#epic-links .epic-page-current {
+    display: inline-block;
+    padding: 1px 7px;
+    margin: 0 1px;
+    border: 1px solid #ccb;
+    border-radius: .2em;
+    text-decoration: none;
+    color: #444;
+    background: #fff;
+}
+#epic-links a.epic-page-btn:hover { background: #eef3ff; border-color: #99b; }
+#epic-links .epic-page-current {
+    background: #663;
+    border-color: #663;
+    color: #fff;
+    font-weight: 600;
+}
+#epic-links a.epic-page-btn.disabled {
+    color: #bbb;
+    background: #f6f6f6;
+    border-color: #e0e0e0;
+    cursor: default;
+    pointer-events: none;
+}
+
 #epic-links .epic-empty {
     color: #888;
     font-style: italic;

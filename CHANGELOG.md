@@ -4,6 +4,42 @@ All notable changes to TracEpicPlugin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.2] - 2026-08-08
+
+### Added
+- **Sortable columns** in the *Linked Tickets* / *Epics* table, exactly like
+  Trac's report / query views: click a column header to sort by it; click the
+  same header again to toggle ascending / descending.  The active column shows
+  a `▴` / `▾` arrow.  Sortable columns: Ticket, Summary, Component, Type,
+  Status, Owner, Modified and Priority.
+- **Default sort** is configurable via the new `[epic] linked_default_sort`
+  option, given as `<field>/<order>` (e.g. `priority/desc`, `modified/desc`).
+  When unset it defaults to `priority/desc` (most severe tickets first).
+- **Pagination**: when the number of linked tickets exceeds
+  `[epic] linked_page_size` (default 10) the table is split into pages with
+  Trac-style page buttons (« Prev / 1 2 3 … / Next »).  Paging preserves the
+  current sort and shows a `Showing X–Y of N` summary.
+- **Priority column**: a compact colour-coded badge (dot) whose colour matches
+  the row priority, with the priority name shown on hover.  This keeps the
+  Summary column wide instead of spending space on a text column.
+
+### Changed
+- **Priority column header** is now compact — a single letter "P" instead of
+  the full word "Priority".  This saves horizontal space and gives more room to
+  the Summary column.  The full label "Priority" is still shown in the sort
+  link's `title` attribute (hover tooltip).
+- The table body, sortable headers and pager are now rendered entirely by
+  `epic.js` from the link data handed over via `add_script_data`.  The Jinja2
+  fragment (`epic_section.html`) is now just the shell (title, header, empty
+  body, pager container and add form).  This removes the previous duplication
+  of row-rendering logic between the template and the JavaScript.
+
+### Configuration
+- New `[epic]` options in `trac.ini`:
+  - `linked_default_sort` — default `<field>/<order>` sort (default
+    `priority/desc`).
+  - `linked_page_size` — rows per page before paginating (default `10`).
+
 ## [1.2.1] - 2026-08-07
 
 ### Changed
