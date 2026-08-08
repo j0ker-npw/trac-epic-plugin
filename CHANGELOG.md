@@ -4,6 +4,23 @@ All notable changes to TracEpicPlugin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-08-08
+
+### Added
+- **Configurable columns** via the new `[epic] linked_fields` option: a
+  comma-separated, ordered list of the fields shown in the *Linked Tickets* /
+  *Epics* table.  Available fields: `ticket`, `summary`, `component`, `type`,
+  `status`, `owner`, `modified` and `priority`.  Unknown tokens are ignored
+  and duplicates collapsed (first occurrence kept).  Defaults to
+  `ticket,summary,type,status`.  The **Remove** button is always rendered as
+  the last column, independently of this option.
+
+### Changed
+- **Closed tickets** now have their whole row greyed out (Trac-style),
+  overriding the priority row colour, with muted text — in addition to the
+  existing strike-through on the ticket-id link.  This makes finished work
+  visually recede from the still-open, priority-coloured rows.
+
 ## [1.2.2] - 2026-08-08
 
 ### Added

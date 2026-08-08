@@ -44,6 +44,14 @@
 #epic-links table.epic-links-table tbody tr.prio6 { background: #f0f0f0; border-color: #ddd; }
 #epic-links table.epic-links-table tbody tr.even.prio6 { background: #f7f7f7; }
 
+/* Closed tickets: grey out the whole row (Trac-style), overriding the prioN
+   colour above.  Declared after the prioN rules so it wins at equal
+   specificity; the two-class ``even.closed`` selector matches the two-class
+   ``even.prioN`` selectors. */
+#epic-links table.epic-links-table tbody tr.closed { background: #eaeaea; border-color: #d5d5d5; }
+#epic-links table.epic-links-table tbody tr.even.closed { background: #f1f1f1; border-color: #ddd; }
+#epic-links table.epic-links-table tbody tr.closed td { color: #777; }
+
 /* Closed tickets: strike through the id link (matches a.closed in trac.css). */
 #epic-links table.epic-links-table a.closed { text-decoration: line-through; }
 

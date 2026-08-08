@@ -94,5 +94,74 @@ class SortAndPageConfigTestCase(unittest.TestCase):
         self.assertEqual(10, self.ui._page_size())
 
 
+class ColumnConfigTestCase(unittest.TestCase):
+    """``[epic] linked_fields`` parsing into ordered ``(field, label)``."""
+
+    def setUp(self):
+        self.env = EnvironmentStub(
+            enable=['trac.*', 'tracepic.*'], default_data=True)
+        self.ui = EpicWebUI(self.env)
+
+    def test_default_field_set(self):
+        # Default is ticket,summary,type,status (ticket -> id internally).
+        self.assertEqual(
+            [('id', 'Ticket'), ('summary', 'Summary'),
+             ('type', 'Type'), ('status', 'Status')],
+            self.ui._columns())
+
+    def test_custom_order_is_honoured(self):
+        self.env.config.set('epic', 'linked_fields',
+                            'priority,summary,ticket')
+        self.assertEqual(
+            [('priority', 'P'), ('summary', 'Summary'), ('id', 'Ticket')],
+            self.ui._columns())
+
+    def test_all_fields(self):
+        self.env.config.set(
+            'epic', 'linked_fields',
+            'ticket,summary,component,type,status,owner,modified,priority')
+        self.assertEqual(
+            ['id', 'summary', 'component', 'type', 'status', 'owner',
+             'modified', 'priority'],
+            [f for f, _label in self.ui._columns()])
+
+    def test_id_alias_accepted(self):
+        self.env.config.set('epic', 'linked_fields', 'id,summary')
+        self.assertEqual(
+            [('id', 'Ticket'), ('summary', 'Summary')], self.ui._columns())
+
+    def test_unknown_tokens_ignored(self):
+        self.env.config.set('epic', 'linked_fields',
+                            'ticket,bogus,summary,nope')
+        self.assertEqual(
+            [('id', 'Ticket'), ('summary', 'Summary')], self.ui._columns())
+
+    def test_duplicates_collapsed_keeping_first(self):
+        self.env.config.set('epic', 'linked_fields',
+                            'summary,ticket,summary,id')
+        self.assertEqual(
+            [('summary', 'Summary'), ('id', 'Ticket')], self.ui._columns())
+
+    def test_case_insensitive_and_whitespace(self):
+        self.env.config.set('epic', 'linked_fields',
+                            '  Ticket , SUMMARY ,  Type ')
+        self.assertEqual(
+            [('id', 'Ticket'), ('summary', 'Summary'), ('type', 'Type')],
+            self.ui._columns())
+
+    def test_empty_falls_back_to_default(self):
+        self.env.config.set('epic', 'linked_fields', '')
+        self.assertEqual(
+            [('id', 'Ticket'), ('summary', 'Summary'),
+             ('type', 'Type'), ('status', 'Status')],
+            self.ui._columns())
+
+    def test_only_invalid_falls_back_to_default(self):
+        self.env.config.set('epic', 'linked_fields', 'bogus,nope, , ')
+        self.assertEqual(
+            ['id', 'summary', 'type', 'status'],
+            [f for f, _label in self.ui._columns()])
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -41,9 +41,42 @@ _TICKET_PATH_RE = re.compile(r'^/ticket/(\d+)$')
 SORTABLE_FIELDS = ('id', 'summary', 'component', 'type', 'status', 'owner',
                    'modified', 'priority')
 
+# Header label shown for each column.  The ``id`` column is configured as
+# ``ticket`` in trac.ini (that is its user-facing name) but rendered as an
+# internal ``id`` field; ``priority`` uses the compact single-letter "P"
+# header (the full name is exposed via the sort link's title attribute).
+FIELD_LABELS = {
+    'id': 'Ticket',
+    'summary': 'Summary',
+    'component': 'Component',
+    'type': 'Type',
+    'status': 'Status',
+    'owner': 'Owner',
+    'modified': 'Modified',
+    'priority': 'P',
+}
+
+# Accepted tokens in ``[epic] linked_fields`` mapped to the internal field
+# key.  ``ticket`` is the user-facing alias for the ``id`` column.
+FIELD_ALIASES = {
+    'ticket': 'id',
+    'id': 'id',
+    'summary': 'summary',
+    'component': 'component',
+    'type': 'type',
+    'status': 'status',
+    'owner': 'owner',
+    'modified': 'modified',
+    'priority': 'priority',
+}
+
 DEFAULT_SORT_FIELD = 'priority'
 DEFAULT_SORT_ORDER = 'desc'
 DEFAULT_PAGE_SIZE = 10
+
+# Default set / order of columns in the linked-tickets table.  The Remove
+# button is always appended last, independently of this list.
+DEFAULT_FIELDS = 'ticket,summary,type,status'
 
 
 class EpicWebUI(Component):
@@ -68,6 +101,17 @@ class EpicWebUI(Component):
         / *Epics* table.  When the number of linked tickets exceeds this
         value the table is paginated with Trac-style page buttons.  Defaults
         to 10.""")
+
+    linked_fields = Option(
+        'epic', 'linked_fields', DEFAULT_FIELDS,
+        doc="""Comma-separated list of columns shown in the *Linked Tickets*
+        / *Epics* table, in the given order.  Available fields: ``ticket``,
+        ``summary``, ``component``, ``type``, ``status``, ``owner``,
+        ``modified`` and ``priority``.  Unknown tokens are ignored;
+        duplicates are collapsed keeping the first occurrence.  The Remove
+        button (when the user may modify tickets) is always shown as the last
+        column, independently of this option.  Defaults to
+        ``ticket,summary,type,status``.""")
 
     def __init__(self):
         self.epics = EpicLinkSystem(self.env)
@@ -94,6 +138,35 @@ class EpicWebUI(Component):
         except (TypeError, ValueError):
             size = DEFAULT_PAGE_SIZE
         return size if size > 0 else DEFAULT_PAGE_SIZE
+
+    def _columns(self):
+        """Return the configured list of ``(field, label)`` column tuples.
+
+        Parses ``[epic] linked_fields`` (a comma-separated list of field
+        tokens).  Unknown tokens are ignored, duplicates are collapsed
+        keeping the first occurrence, and the internal ``id`` field accepts
+        the user-facing alias ``ticket``.  Falls back to
+        :data:`DEFAULT_FIELDS` when the option is empty or resolves to no
+        valid column.  The Remove button is *not* part of this list -- it is
+        always rendered last by the template / ``epic.js`` independently.
+        """
+        raw = self.linked_fields
+        if raw is None or not str(raw).strip():
+            raw = DEFAULT_FIELDS
+        fields = self._parse_fields(raw)
+        if not fields:
+            fields = self._parse_fields(DEFAULT_FIELDS)
+        return [(f, FIELD_LABELS[f]) for f in fields]
+
+    @staticmethod
+    def _parse_fields(raw):
+        """Tokenise *raw* into an ordered list of unique internal field keys."""
+        result = []
+        for token in str(raw).split(','):
+            key = FIELD_ALIASES.get(token.strip().lower())
+            if key and key not in result:
+                result.append(key)
+        return result
 
     # ------------------------------------------------------------------
     # IRequestFilter
@@ -138,6 +211,7 @@ class EpicWebUI(Component):
 
         sort_field, sort_order = self._default_sort()
         page_size = self._page_size()
+        columns = self._columns()
 
         frag_data = {
             'ticket_id': ticket_id,
@@ -145,6 +219,7 @@ class EpicWebUI(Component):
             'can_modify': can_modify,
             'sort_field': sort_field,
             'sort_order': sort_order,
+            'columns': columns,
         }
         # render_fragment produces just the fragment (no page skeleton),
         # which is what we hand to the browser for injection.  The fragment
@@ -164,6 +239,7 @@ class EpicWebUI(Component):
             'links': linked,
             'sort': {'field': sort_field, 'order': sort_order},
             'page_size': page_size,
+            'columns': [f for f, _label in columns],
         }})
         add_stylesheet(req, 'tracepic/epic.css')
         add_script(req, 'tracepic/epic.js')

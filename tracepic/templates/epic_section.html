@@ -11,7 +11,10 @@
 ##   can_modify  : bool  - True when the user has TICKET_MODIFY
 ##   sort_field  : str   - default sort column (from trac.ini)
 ##   sort_order  : str   - 'asc' | 'desc' (from trac.ini)
-# set columns = [('id', 'Ticket'), ('summary', 'Summary'), ('component', 'Component'), ('type', 'Type'), ('status', 'Status'), ('owner', 'Owner'), ('modified', 'Modified'), ('priority', 'P')]
+##   columns     : list  - ordered (field, label) tuples to render as the
+##                         sortable table header (from [epic] linked_fields).
+##                         The Remove button column is always appended last,
+##                         independently of this list.
 <div id="epic-links" class="epic-links"
      data-ticket-id="${ticket_id}"
      data-is-epic="${'1' if is_epic else '0'}">

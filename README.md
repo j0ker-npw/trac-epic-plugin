@@ -124,6 +124,10 @@ Both are configurable:
 
 ```ini
 [epic]
+# Columns shown in the table, in order. Available fields: ticket, summary,
+# component, type, status, owner, modified, priority. Unknown tokens are
+# ignored, duplicates collapsed. The Remove button is always the last column.
+linked_fields = ticket,summary,type,status
 # Default sort as <field>/<order>. field ∈ {id, summary, component, type,
 # status, owner, modified, priority}; order ∈ {asc, desc}.
 # For 'priority', 'desc' lists the most severe tickets first (blocker at top).
@@ -132,10 +136,12 @@ linked_default_sort = priority/desc
 linked_page_size = 10
 ```
 
-If a value is omitted or invalid the defaults `priority/desc` and `10` are
-used.  The **Priority** column is shown as a compact colour-coded badge (its
-colour matches the row's priority) with the priority name revealed on hover,
-so it does not eat into the width of the Summary column.
+If a value is omitted or invalid the defaults `ticket,summary,type,status`,
+`priority/desc` and `10` are used.  The **Priority** column (when shown) is a
+compact colour-coded badge (its colour matches the row's priority) with the
+priority name revealed on hover, so it does not eat into the width of the
+Summary column.  **Closed** tickets have their whole row greyed out
+(Trac-style) with a strike-through ticket-id link.
 
 ### XML-RPC API
 
@@ -327,6 +333,10 @@ trac-admin /path/to/env ticket_type add epic
 
 ```ini
 [epic]
+# Набор и порядок столбцов таблицы. Доступные поля: ticket, summary,
+# component, type, status, owner, modified, priority. Неизвестные токены
+# игнорируются, дубликаты убираются. Кнопка Remove всегда последний столбец.
+linked_fields = ticket,summary,type,status
 # Сортировка по умолчанию в формате <поле>/<направление>.
 # поле ∈ {id, summary, component, type, status, owner, modified, priority};
 # направление ∈ {asc, desc}.
@@ -337,10 +347,12 @@ linked_page_size = 10
 ```
 
 Если параметр не задан или указан неверно, используются значения по
-умолчанию `priority/desc` и `10`. Столбец **Priority** отображается
-компактным цветным индикатором (цвет соответствует приоритету строки), а
-название приоритета показывается во всплывающей подсказке при наведении —
-чтобы не сокращать ширину столбца Summary.
+умолчанию `ticket,summary,type,status`, `priority/desc` и `10`. Столбец
+**Priority** (если включён) отображается компактным цветным индикатором
+(цвет соответствует приоритету строки), а название приоритета показывается
+во всплывающей подсказке при наведении — чтобы не сокращать ширину столбца
+Summary. Закрытые (**closed**) тикеты отображаются серой строкой (в стиле
+Trac) с зачёркнутым номером тикета.
 
 ### XML-RPC API
 
