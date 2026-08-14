@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  python-tests:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Mirrors requires-python (>=3.9) and the classifiers in
+        # pyproject.toml.
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install the plugin and test tooling
+        run: |
+          python -m pip install --upgrade pip
+          # Trac>=1.6 (declared dependency) plus pytest as the runner.
+          pip install -e .
+          pip install pytest
+
+      - name: Run the Python test suite
+        run: python -m pytest tests/ -v
+
+  js-tests:
+    name: JavaScript logic tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run the epic.js logic tests
+        run: node tests/test_epic_js.js
