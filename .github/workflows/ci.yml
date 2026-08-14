@@ -13,13 +13,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Mirrors requires-python (>=3.9) and the classifiers in
-        # pyproject.toml.
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        # Mirrors requires-python (>=3.9,<3.12) and the classifiers in
+        # pyproject.toml. Trac 1.6 officially supports Python up to 3.11.
+        python-version: ["3.9", "3.10", "3.11"]
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -36,17 +36,49 @@ jobs:
       - name: Run the Python test suite
         run: python -m pytest tests/ -v
 
+  python-tests-experimental:
+    name: Python ${{ matrix.python-version }} (experimental)
+    runs-on: ubuntu-latest
+    continue-on-error: true  # Do not block CI if these versions fail
+    strategy:
+      fail-fast: false
+      matrix:
+        # Experimental support for newer Python versions.
+        # Trac 1.6 includes multipart dependency for Python >= 3.13 (cgi replacement),
+        # but these versions are not yet officially supported upstream.
+        python-version: ["3.12", "3.13"]
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install the plugin and test tooling (with multipart for cgi replacement)
+        run: |
+          python -m pip install --upgrade pip
+          # On Python >= 3.13, multipart is a declared dependency of Trac for cgi replacement.
+          # Install explicitly to ensure cgi.FieldStorage fallback works.
+          pip install -e .
+          pip install multipart pytest
+
+      - name: Run the Python test suite
+        run: python -m pytest tests/ -v
+
   js-tests:
     name: JavaScript logic tests
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: Run the epic.js logic tests
         run: node tests/test_epic_js.js
