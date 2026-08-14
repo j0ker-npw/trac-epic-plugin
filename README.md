@@ -208,11 +208,52 @@ CREATE TABLE epic_links (
 );
 ```
 
+### Security & permissions
+
+The plugin gates every operation on Trac's standard ticket permissions,
+checked **per ticket** (not just globally), so fine-grained policies such as
+`AuthzPolicy` or per-component restrictions are honoured:
+
+| Operation | Required permission |
+|-----------|--------------------|
+| See the *Epics* / *Linked Tickets* section on a ticket | `TICKET_VIEW` on that ticket |
+| Autocomplete search (`/epic/search`) | `TICKET_VIEW` — each candidate is additionally filtered by `TICKET_VIEW` on that specific ticket |
+| Add or remove a link (web `/epic/link` or RPC `addEpicLink`/`removeEpicLink`) | `TICKET_MODIFY` on **both** the epic and the ticket |
+
+Notes:
+
+* Adding or removing a link mutates the changelog of **both** tickets, so
+  `TICKET_MODIFY` is required on each; a user denied on either ticket is
+  rejected (HTTP `403` for the web endpoint, an error for RPC).
+* The web `/epic/link` endpoint is `POST`-only and validates Trac's
+  `__FORM_TOKEN` (CSRF protection) before doing anything.
+* All ticket-supplied values are rendered client-side with jQuery
+  `.text()`/`.attr()` (never `.html()`), and the server fragment is an
+  auto-escaped Jinja2 template, so stored ticket data cannot inject markup.
+
+### Changelog field
+
+Link additions and removals are recorded in each ticket's history under the
+change field named **`epic_link`** (constant `CHANGELOG_FIELD` in
+`tracepic/api.py`). In Trac's ticket history these entries render generically
+(old/new values are the referenced `#id`). If you filter or report on ticket
+history programmatically, match on `field = 'epic_link'`.
+
+> **Implementation note.** For efficiency and transactional consistency the
+> plugin writes these changelog rows (and the `changetime` bump) directly via
+> SQL rather than through Trac's `Ticket` model. As a consequence,
+> `ITicketChangeListener` notifications (e.g. e-mail) do **not** fire for link
+> changes. This trade-off is documented in `EpicLinkSystem._write_change`.
+> Orphaned links are still cleaned up automatically: the plugin implements
+> `ITicketChangeListener.ticket_deleted` to drop links referencing a deleted
+> ticket.
+
 ### Running the tests
 
 ```bash
 pip install -e .
-python -m pytest tests/ -v
+python -m pytest tests/ -v      # Python model, handlers, authz, config
+node tests/test_epic_js.js      # client-side sort/paginate logic
 ```
 
 ---
@@ -386,11 +427,54 @@ Trac) с зачёркнутым номером тикета.
 
 Миграция идемпотентна, повторный запуск безопасен.
 
+### Безопасность и права доступа
+
+Плагин контролирует каждую операцию по стандартным правам Trac на тикеты,
+проверяя их **для каждого тикета отдельно** (а не только глобально), поэтому
+тонко-гранулированные политики вроде `AuthzPolicy` или ограничений по
+компонентам учитываются:
+
+| Операция | Требуемое право |
+|----------|-----------------|
+| Видеть блок *Epics* / *Linked Tickets* на тикете | `TICKET_VIEW` на этом тикете |
+| Поиск-автодополнение (`/epic/search`) | `TICKET_VIEW`; каждый кандидат дополнительно фильтруется по `TICKET_VIEW` на конкретном тикете |
+| Добавить/удалить связь (веб `/epic/link` или RPC `addEpicLink`/`removeEpicLink`) | `TICKET_MODIFY` на **обоих** тикетах — эпике и тикете |
+
+Замечания:
+
+* Добавление или удаление связи изменяет историю **обоих** тикетов, поэтому
+  требуется `TICKET_MODIFY` на каждом; пользователю, которому запрещён любой
+  из тикетов, операция отклоняется (HTTP `403` для веб-эндпоинта, ошибка для
+  RPC).
+* Веб-эндпоинт `/epic/link` принимает только `POST` и проверяет токен
+  `__FORM_TOKEN` (защита от CSRF).
+* Все значения из тикетов выводятся на стороне клиента через jQuery
+  `.text()`/`.attr()` (никогда `.html()`), а серверный фрагмент — это
+  автоэкранируемый шаблон Jinja2, поэтому данные тикетов не могут внедрить
+  разметку.
+
+### Поле истории изменений
+
+Добавление и удаление связей записывается в историю каждого тикета под именем
+поля **`epic_link`** (константа `CHANGELOG_FIELD` в `tracepic/api.py`). В
+истории Trac эти записи отображаются обобщённо (старое/новое значение — это
+`#id`). Для программной фильтрации истории используйте `field = 'epic_link'`.
+
+> **Замечание по реализации.** Ради производительности и транзакционной
+> целостности плагин пишет эти записи истории (и обновление `changetime`)
+> напрямую через SQL, а не через модель `Ticket` Trac. Как следствие,
+> уведомления `ITicketChangeListener` (например, e-mail) для изменений связей
+> **не** срабатывают. Компромисс задокументирован в
+> `EpicLinkSystem._write_change`. Осиротевшие связи при этом очищаются
+> автоматически: плагин реализует `ITicketChangeListener.ticket_deleted`,
+> удаляя связи, ссылающиеся на удалённый тикет.
+
 ### Запуск тестов
 
 ```bash
 pip install -e .
-python -m pytest tests/ -v
+python -m pytest tests/ -v      # модель, обработчики, права, конфигурация
+node tests/test_epic_js.js      # клиентская логика сортировки/пагинации
 ```
 
 ---

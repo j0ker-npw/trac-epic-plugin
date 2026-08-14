@@ -22,6 +22,7 @@ import re
 from trac.core import Component, implements, TracError
 from trac.config import Option, IntOption
 from trac.perm import PermissionError
+from trac.resource import Resource
 from trac.web.api import IRequestFilter, IRequestHandler, RequestDone
 from trac.web.chrome import (ITemplateProvider, Chrome, add_script,
                              add_script_data, add_stylesheet)
@@ -83,6 +84,13 @@ class EpicWebUI(Component):
     """Ticket page integration and AJAX endpoints for epic links."""
 
     implements(IRequestFilter, IRequestHandler, ITemplateProvider)
+
+    # Maximum number of autocomplete suggestions returned to the browser.
+    SEARCH_MAX_RESULTS = 20
+    # Hard cap applied in SQL (``LIMIT``) so the search never scans the whole
+    # ticket table.  Kept a few times larger than SEARCH_MAX_RESULTS so that
+    # per-ticket TICKET_VIEW filtering still has candidates to draw from.
+    SEARCH_SQL_LIMIT = 100
 
     # -- Configuration (``[epic]`` section of trac.ini) ----------------
     linked_default_sort = Option(
@@ -276,7 +284,6 @@ class EpicWebUI(Component):
             return self._send_json(req, {'error': 'POST required'}, status=405)
 
         # CSRF protection: validate Trac's form token explicitly.
-        req.perm.require('TICKET_MODIFY')
         token = req.args.get('__FORM_TOKEN')
         if token != req.form_token:
             return self._send_json(
@@ -290,6 +297,18 @@ class EpicWebUI(Component):
             return self._send_json(
                 req, {'error': 'epic_id and ticket_id must be integers'},
                 status=400)
+
+        # Enforce TICKET_MODIFY on *both* specific tickets, not just the
+        # global realm.  This honours fine-grained permission policies (e.g.
+        # AuthzPolicy, per-component restrictions): a user allowed to modify
+        # tickets in general but explicitly denied on one of these two
+        # tickets must not be able to mutate the link or write its changelog.
+        # Mirrors the per-resource checks already used in xmlrpc.py.
+        try:
+            req.perm(Resource('ticket', epic_id)).require('TICKET_MODIFY')
+            req.perm(Resource('ticket', ticket_id)).require('TICKET_MODIFY')
+        except PermissionError as exc:
+            return self._send_json(req, {'error': str(exc)}, status=403)
 
         author = req.authname or 'anonymous'
         try:
@@ -335,11 +354,14 @@ class EpicWebUI(Component):
         params = []
 
         if term:
-            if term.lstrip('#').isdigit():
-                clauses.append("(CAST(id AS text) LIKE %s OR "
-                               "LOWER(summary) LIKE %s)")
-                like = '%' + term.lstrip('#').lower() + '%'
-                params.extend([like, like])
+            digits = term.lstrip('#')
+            if digits.isdigit():
+                # Numeric term: match the ticket id exactly (portable across
+                # SQLite/PostgreSQL/MySQL -- avoids the non-portable
+                # ``CAST(id AS text)`` which fails on MySQL) or the summary.
+                clauses.append("(id=%s OR LOWER(summary) LIKE %s)")
+                params.append(int(digits))
+                params.append('%' + digits.lower() + '%')
             else:
                 clauses.append("LOWER(summary) LIKE %s")
                 params.append('%' + term.lower() + '%')
@@ -356,15 +378,23 @@ class EpicWebUI(Component):
             params.append(exclude)
 
         where = (' WHERE ' + ' AND '.join(clauses)) if clauses else ''
+        # Cap the result set in SQL rather than fetching every match and
+        # trimming in Python.  We fetch a comfortable margin above the 20
+        # rows finally returned so that per-ticket TICKET_VIEW filtering
+        # below still has candidates to work with, without scanning the whole
+        # ticket table on large instances.
         sql = ("SELECT id, summary, status, type FROM ticket" + where +
-               " ORDER BY id DESC")
+               " ORDER BY id DESC LIMIT %s")
+        params.append(self.SEARCH_SQL_LIMIT)
 
         results = []
         for tid, summary, status, ttype in \
                 self.env.db_query(sql, tuple(params)):
-            resource = 'ticket:%d' % tid
-            # Respect fine grained permission policies.
-            if 'TICKET_VIEW' not in req.perm(resource):
+            # Respect fine grained permission policies.  A proper ``Resource``
+            # object (not the ``'ticket:N'`` string, which Trac would treat as
+            # an opaque realm with no id) is required for per-ticket policies
+            # such as AuthzPolicy to actually match.
+            if 'TICKET_VIEW' not in req.perm(Resource('ticket', tid)):
                 continue
             results.append({
                 'id': tid,
@@ -373,7 +403,7 @@ class EpicWebUI(Component):
                 'type': ttype,
                 'label': '#%d: %s' % (tid, summary),
             })
-            if len(results) >= 20:
+            if len(results) >= self.SEARCH_MAX_RESULTS:
                 break
         return results
 

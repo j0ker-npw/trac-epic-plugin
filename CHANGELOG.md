@@ -4,6 +4,43 @@ All notable changes to TracEpicPlugin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] - 2026-08-14
+
+This release addresses the findings of a security & code review, hardening
+authorization, database access and orphan cleanup, and adds automated CI.
+
+### Security
+- **Per-ticket authorization** on the link/unlink endpoint: instead of a single
+  global `TICKET_MODIFY` check, the web handler now requires `TICKET_MODIFY` on
+  *both* the epic and the ticket being linked (checked per-resource via
+  `Resource('ticket', id)`), returning a proper `403` JSON response on denial.
+- **RPC `removeEpicLink`** now requires `TICKET_MODIFY` on *both* the ticket and
+  the epic before removing a link (previously only one side was checked).
+- **Safe table-existence check**: `_table_exists` now validates names against a
+  known-tables whitelist instead of interpolating arbitrary identifiers into SQL.
+- Fixed per-resource permission checks that passed a `'ticket:N'` string where a
+  real `Resource('ticket', N)` object was required, so fine-grained ticket
+  policies are now actually enforced in the search and RPC paths.
+
+### Added
+- **Orphan cleanup**: the plugin now implements `ITicketChangeListener` and
+  removes any `epic_links` rows referencing a ticket when that ticket is deleted.
+- **GitHub Actions CI**: Python test matrix (3.9–3.13) plus a JavaScript logic
+  test job.
+- Expanded test suite: endpoint authorization/CSRF/validation tests and
+  migration idempotency / multi-token tests.
+- README documentation for the security & permissions model and the changelog
+  field integration (English and Russian).
+
+### Changed
+- **DB-neutral search**: numeric search terms now match `id = %s OR
+  LOWER(summary) LIKE %s` (no database-specific `CAST`), and the query is bounded
+  by a SQL `LIMIT` in addition to the result-count cap.
+- `add_link` now handles a concurrent-insert race gracefully (integrity errors
+  are caught and reported as "link already exists" rather than raising).
+- The jQuery-missing fallback in `epic.js` now emits a `console.warn` before
+  degrading to a no-op stub.
+
 ## [1.3.0] - 2026-08-08
 
 ### Added

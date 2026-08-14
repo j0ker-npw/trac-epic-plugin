@@ -184,6 +184,68 @@ class EpicLinkSystemTestCase(unittest.TestCase):
         # Referenced epic 9999 does not exist -> no link created.
         self.assertEqual([], self.epics.get_epics_for_ticket(self.env, t1))
 
+    def test_migration_multi_token_and_hash_prefix(self):
+        # A single legacy field may carry several references separated by
+        # commas/spaces, each optionally '#'-prefixed.  All valid ones must
+        # become links.
+        epic1 = _make_ticket(self.env, 'Epic 1', ttype='epic')
+        epic2 = _make_ticket(self.env, 'Epic 2', ttype='epic')
+        t1 = _make_ticket(self.env, 'Multi task')
+        with self.env.db_transaction as db:
+            db("""INSERT INTO ticket_custom (ticket, name, value)
+                  VALUES (%s, %s, %s)""",
+               (t1, 'epic', '#%d, %d' % (epic1, epic2)))
+        self.epics._set_installed_version(0)
+        self.epics.upgrade_environment()
+        self.assertEqual([epic1, epic2],
+                         self.epics.get_epics_for_ticket(self.env, t1))
+
+    def test_second_upgrade_after_data_is_idempotent(self):
+        # Once links exist, forcing a re-migration must neither raise nor
+        # duplicate the existing links.
+        epic = _make_ticket(self.env, 'Epic', ttype='epic')
+        t1 = _make_ticket(self.env, 'Task')
+        with self.env.db_transaction as db:
+            db("""INSERT INTO ticket_custom (ticket, name, value)
+                  VALUES (%s, %s, %s)""", (t1, 'epic', '#%d' % epic))
+        self.epics._set_installed_version(0)
+        self.epics.upgrade_environment()
+        self.assertEqual([epic],
+                         self.epics.get_epics_for_ticket(self.env, t1))
+        # Re-run migration a second time.
+        self.epics._set_installed_version(0)
+        self.epics.upgrade_environment()
+        self.assertEqual([epic],
+                         self.epics.get_epics_for_ticket(self.env, t1))
+
+    # -- orphan cleanup on ticket deletion -----------------------------
+    def test_ticket_deleted_removes_links(self):
+        epic = _make_ticket(self.env, 'Epic', ttype='epic')
+        t1 = _make_ticket(self.env, 'Task 1')
+        t2 = _make_ticket(self.env, 'Task 2')
+        self.epics.add_link(self.env, epic, t1, 'alice')
+        self.epics.add_link(self.env, epic, t2, 'alice')
+
+        # Deleting t1 through Trac fires ITicketChangeListener.ticket_deleted,
+        # which must remove the (epic, t1) link but leave (epic, t2) intact.
+        Ticket(self.env, t1).delete()
+        self.assertEqual([t2],
+                         self.epics.get_tickets_for_epic(self.env, epic))
+
+        # Deleting the epic itself removes its remaining links too.
+        Ticket(self.env, epic).delete()
+        self.assertEqual([],
+                         self.epics.get_epics_for_ticket(self.env, t2))
+
+    def test_ticket_deleted_listener_registered(self):
+        # The component must advertise ITicketChangeListener so Trac invokes
+        # the cleanup hook on ticket deletion.
+        from trac.ticket.api import TicketSystem
+        listeners = list(TicketSystem(self.env).change_listeners)
+        self.assertTrue(
+            any(isinstance(l, EpicLinkSystem) for l in listeners),
+            "EpicLinkSystem must be registered as an ITicketChangeListener")
+
 
 if __name__ == '__main__':
     unittest.main()

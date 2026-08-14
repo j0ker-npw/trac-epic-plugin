@@ -494,4 +494,14 @@
     render(conf, $section, state);
   });
 
-})(typeof jQuery !== "undefined" ? jQuery : function () { return undefined; });
+})(typeof jQuery !== "undefined" ? jQuery : (function () {
+  // jQuery ships with Trac 1.6, so it should always be present.  If it is
+  // somehow missing, warn loudly (instead of silently no-opping) so the
+  // cause is obvious in the browser console, then hand back a stub whose
+  // document-ready call is a harmless no-op.
+  if (typeof console !== "undefined" && console.warn) {
+    console.warn("TracEpicPlugin: jQuery is not available; the epic links " +
+                 "section will not be rendered.");
+  }
+  return function () { return undefined; };
+})());

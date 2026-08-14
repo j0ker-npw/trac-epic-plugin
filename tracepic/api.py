@@ -21,6 +21,7 @@ import time
 
 from trac.core import Component, implements, TracError
 from trac.env import IEnvironmentSetupParticipant
+from trac.ticket.api import ITicketChangeListener
 
 # Name of the plugin schema entry stored in the ``system`` table.
 PLUGIN_NAME = 'tracepic'
@@ -35,6 +36,15 @@ CHANGELOG_FIELD = 'epic_link'
 LEGACY_CUSTOM_FIELDS = ('epic', 'parent_epic')
 
 
+class _LinkAlreadyExists(Exception):
+    """Internal sentinel: a concurrent INSERT already created the link.
+
+    Raised inside the :meth:`EpicLinkSystem.add_link` transaction so the
+    transaction rolls back, then caught by the method to return ``False``
+    (idempotent "already linked").  Never propagates to callers.
+    """
+
+
 def _now_us():
     """Return the current time as microseconds since the epoch.
 
@@ -46,7 +56,7 @@ def _now_us():
 class EpicLinkSystem(Component):
     """Central component managing epic <-> ticket links."""
 
-    implements(IEnvironmentSetupParticipant)
+    implements(IEnvironmentSetupParticipant, ITicketChangeListener)
 
     # ------------------------------------------------------------------
     # IEnvironmentSetupParticipant
@@ -79,6 +89,46 @@ class EpicLinkSystem(Component):
                       PLUGIN_SCHEMA_VERSION)
 
     # ------------------------------------------------------------------
+    # ITicketChangeListener
+    # ------------------------------------------------------------------
+    # The plugin only cares about ticket deletion (to clean up orphaned
+    # links); the create/change hooks are required by the interface but are
+    # intentional no-ops.
+    def ticket_created(self, ticket):
+        pass
+
+    def ticket_changed(self, ticket, comment, author, old_values):
+        pass
+
+    def ticket_deleted(self, ticket):
+        """Remove any ``epic_links`` rows referencing the deleted ticket.
+
+        Without this, deleting a ticket would leave dangling link rows whose
+        ``epic_id`` or ``ticket_id`` no longer resolves to a real ticket.
+        They accumulate over time (the UI tolerates them because
+        :meth:`get_ticket_summary` returns ``None``), so we delete them
+        eagerly when Trac fires the deletion event.
+        """
+        try:
+            tid = int(ticket.id)
+        except (TypeError, ValueError, AttributeError):
+            return
+        with self.env.db_transaction as db:
+            db("""
+                DELETE FROM epic_links
+                WHERE epic_id=%s OR ticket_id=%s
+                """, (tid, tid))
+        self.log.debug("TracEpicPlugin removed epic links for deleted "
+                       "ticket #%d", tid)
+
+    def ticket_comment_modified(self, ticket, cdate, author, comment,
+                                old_comment):
+        pass
+
+    def ticket_change_deleted(self, ticket, cdate, changes):
+        pass
+
+    # ------------------------------------------------------------------
     # Schema helpers
     # ------------------------------------------------------------------
     def _get_installed_version(self):
@@ -105,15 +155,33 @@ class EpicLinkSystem(Component):
                 db("INSERT INTO system (name, value) VALUES (%s, %s)",
                    (key, str(version)))
 
+    # Tables this plugin is ever allowed to probe.  Restricting the fallback
+    # path to a fixed whitelist means the table name can never originate from
+    # untrusted input, so no identifier is interpolated into SQL from an
+    # external source (see security review 2.3).
+    _KNOWN_TABLES = ('epic_links',)
+
     def _table_exists(self, db, table_name):
-        """Return ``True`` if *table_name* exists in the connected database."""
+        """Return ``True`` if *table_name* exists in the connected database.
+
+        The backend-neutral ``DatabaseManager.get_table_names`` path is the
+        primary (and normally the only) mechanism used.  A direct probe is
+        kept purely as a defensive fallback and is guarded by a hardcoded
+        whitelist (:data:`_KNOWN_TABLES`): a table name that is not a known
+        plugin table is reported as missing rather than interpolated into a
+        query, eliminating the identifier-injection sink flagged in the code
+        review.
+        """
         # ``DatabaseManager.get_table_names`` gives a backend neutral answer.
         try:
             from trac.db.api import DatabaseManager
             tables = DatabaseManager(self.env).get_table_names()
             return table_name in tables
         except Exception:
-            # Fallback: probe the table directly.
+            # Fallback: probe the table directly, but only for known plugin
+            # tables so the identifier is never attacker controlled.
+            if table_name not in self._KNOWN_TABLES:
+                return False
             try:
                 db("SELECT 1 FROM %s WHERE 1=0" % table_name)
                 return True
@@ -279,28 +347,43 @@ class EpicLinkSystem(Component):
         if epic_id == ticket_id:
             raise TracError("A ticket cannot be linked to itself.")
 
-        with env.db_transaction as db:
-            self._assert_ticket_exists(db, epic_id, "epic")
-            self._assert_ticket_exists(db, ticket_id, "ticket")
+        try:
+            with env.db_transaction as db:
+                self._assert_ticket_exists(db, epic_id, "epic")
+                self._assert_ticket_exists(db, ticket_id, "ticket")
 
-            already = list(db("""
-                SELECT 1 FROM epic_links WHERE epic_id=%s AND ticket_id=%s
-                """, (epic_id, ticket_id)))
-            if already:
-                return False
+                already = list(db("""
+                    SELECT 1 FROM epic_links
+                    WHERE epic_id=%s AND ticket_id=%s
+                    """, (epic_id, ticket_id)))
+                if already:
+                    return False
 
-            when = _now_us()
-            db("""
-                INSERT INTO epic_links (epic_id, ticket_id, author, created)
-                VALUES (%s, %s, %s, %s)
-                """, (epic_id, ticket_id, author, when))
+                when = _now_us()
+                try:
+                    db("""
+                        INSERT INTO epic_links
+                            (epic_id, ticket_id, author, created)
+                        VALUES (%s, %s, %s, %s)
+                        """, (epic_id, ticket_id, author, when))
+                except env.db_exc.IntegrityError:
+                    # The check-then-insert above can still lose a race with
+                    # a concurrent identical add_link: the unique index on
+                    # (epic_id, ticket_id) then rejects the duplicate INSERT.
+                    # Re-raise as a sentinel so the enclosing transaction is
+                    # rolled back cleanly (the link the winning transaction
+                    # created stays), and report "already linked" to the
+                    # caller for an idempotent result.
+                    raise _LinkAlreadyExists()
 
-            # Changelog for the epic ticket: gained a linked ticket.
-            self._write_change(db, epic_id, author, when,
-                               oldvalue='', newvalue='#%d' % ticket_id)
-            # Changelog for the regular ticket: gained an epic.
-            self._write_change(db, ticket_id, author, when,
-                               oldvalue='', newvalue='#%d' % epic_id)
+                # Changelog for the epic ticket: gained a linked ticket.
+                self._write_change(db, epic_id, author, when,
+                                   oldvalue='', newvalue='#%d' % ticket_id)
+                # Changelog for the regular ticket: gained an epic.
+                self._write_change(db, ticket_id, author, when,
+                                   oldvalue='', newvalue='#%d' % epic_id)
+        except _LinkAlreadyExists:
+            return False
         self.log.debug("TracEpicPlugin linked epic #%d <-> ticket #%d by %s",
                        epic_id, ticket_id, author)
         return True
@@ -349,6 +432,25 @@ class EpicLinkSystem(Component):
 
         Also bumps the ticket's ``changetime`` so the change is reflected in
         the ticket listing / timeline.
+
+        .. note::
+           This deliberately writes straight to ``ticket_change`` and
+           ``ticket.changetime`` instead of going through Trac's ``Ticket``
+           model.  The trade-off is intentional (documented in the security
+           review, item 2.2):
+
+           * **Pro** — the link row and both changelog rows are written in a
+             single ``epic_links`` transaction, so the link and its audit
+             trail are always consistent and cheap to write.
+           * **Con** — Trac's ``ITicketChangeListener`` notifications do not
+             fire for these synthetic changes (no e-mail notifications, no
+             listener-driven cache invalidation), and the manual
+             ``changetime`` bump could in principle race with a concurrent
+             legitimate ticket edit.
+
+           Callers that need notification side effects should route through
+           the ``Ticket`` model instead.  All values here are parameterized,
+           so this is not an injection vector.
         """
         db("""
             INSERT INTO ticket_change

@@ -16,6 +16,7 @@ keeps working.
 """
 
 from trac.core import Component, implements, TracError
+from trac.resource import Resource
 
 from tracepic.api import EpicLinkSystem
 
@@ -82,21 +83,29 @@ if HAS_TRACRPC:
 
         def removeEpicLink(self, req, ticket_id, epic_id):
             """Remove the link between ``ticket_id`` and ``epic_id``.
-            Returns ``True`` if a link was removed."""
+            Returns ``True`` if a link was removed.
+
+            Consistent with :meth:`addEpicLink`, this requires
+            ``TICKET_MODIFY`` on *both* tickets: mutating a link changes the
+            changelog of each, so a caller denied on either ticket must not
+            be able to remove the link."""
             self._require_modify(req, ticket_id)
+            self._require_modify(req, epic_id)
             author = req.authname or 'anonymous'
             return self.epics.remove_link(
                 self.env, int(epic_id), int(ticket_id), author)
 
         # -- permission helpers ----------------------------------------
         def _require_view(self, req, ticket_id):
-            resource = 'ticket:%d' % int(ticket_id)
+            # A proper Resource (not the 'ticket:N' string) is required for
+            # per-ticket permission policies to match correctly.
+            resource = Resource('ticket', int(ticket_id))
             if 'TICKET_VIEW' not in req.perm(resource):
                 raise TracError("TICKET_VIEW permission required for #%s"
                                 % ticket_id)
 
         def _require_modify(self, req, ticket_id):
-            resource = 'ticket:%d' % int(ticket_id)
+            resource = Resource('ticket', int(ticket_id))
             if 'TICKET_MODIFY' not in req.perm(resource):
                 raise TracError("TICKET_MODIFY permission required for #%s"
                                 % ticket_id)
