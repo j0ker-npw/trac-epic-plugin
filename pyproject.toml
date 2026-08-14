@@ -7,7 +7,7 @@ name = "TracEpicPlugin"
 version = "1.4.0"
 description = "Epic <-> ticket linking for Trac 1.6 (M:N relations, changelog, XML-RPC)"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.9,<3.12"
 license = {text = "BSD-3-Clause"}
 authors = [{ name = "TracEpicPlugin Contributors" }]
 keywords = ["trac", "plugin", "epic", "tickets", "issue-tracking"]
@@ -18,8 +18,6 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
 ]
 
 [project.urls]

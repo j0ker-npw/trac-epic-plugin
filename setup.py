@@ -23,6 +23,7 @@ from setuptools import setup, find_packages
 setup(
     name='TracEpicPlugin',
     version='1.4.0',
+    python_requires='>=3.9,<3.12',
     packages=find_packages(exclude=['tests', 'tests.*']),
     package_data={
         'tracepic': [
