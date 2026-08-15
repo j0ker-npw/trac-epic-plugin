@@ -28,8 +28,7 @@ jobs:
 
       - name: Install the plugin and test tooling
         run: |
-          python -m pip install --upgrade pip
-          # Trac>=1.6 (declared dependency) plus pytest as the runner.
+          python -m pip install --upgrade pip setuptools
           pip install -e .
           pip install pytest
 
@@ -43,9 +42,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Experimental support for newer Python versions.
-        # Trac 1.6 includes multipart dependency for Python >= 3.13 (cgi replacement),
-        # but these versions are not yet officially supported upstream.
+        # Experimental: Python 3.12 and 3.13 are not yet officially supported
+        # by upstream Trac 1.6, but Trac already declares multipart as a
+        # dependency for Python >= 3.13 (replacement for the removed cgi module).
         python-version: ["3.12", "3.13"]
 
     steps:
@@ -57,13 +56,16 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install the plugin and test tooling (with multipart for cgi replacement)
+      - name: Install the plugin and test tooling
         run: |
-          python -m pip install --upgrade pip
-          # On Python >= 3.13, multipart is a declared dependency of Trac for cgi replacement.
-          # Install explicitly to ensure cgi.FieldStorage fallback works.
-          pip install -e .
-          pip install multipart pytest
+          python -m pip install --upgrade pip setuptools
+          # Install Trac's cgi replacement for Python >= 3.13
+          pip install multipart
+          # --ignore-requires-python: our pyproject.toml caps at <3.12 because
+          # Trac 1.6 does not officially support newer versions, but we test
+          # experimentally to track upstream compatibility.
+          pip install --ignore-requires-python -e .
+          pip install pytest
 
       - name: Run the Python test suite
         run: python -m pytest tests/ -v
