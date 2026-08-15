@@ -28,7 +28,7 @@ jobs:
 
       - name: Install the plugin and test tooling
         run: |
-          python -m pip install --upgrade pip setuptools
+          python -m pip install --upgrade pip
           pip install -e .
           pip install pytest
 
@@ -58,12 +58,14 @@ jobs:
 
       - name: Install the plugin and test tooling
         run: |
-          python -m pip install --upgrade pip setuptools
-          # Install Trac's cgi replacement for Python >= 3.13
+          python -m pip install --upgrade pip
+          # setuptools (and its pkg_resources) is not pre-installed on Python 3.12+
+          # GHA runners; install it explicitly before Trac which imports pkg_resources.
+          pip install setuptools
+          # multipart replaces the removed cgi module on Python >= 3.13.
           pip install multipart
-          # --ignore-requires-python: our pyproject.toml caps at <3.12 because
-          # Trac 1.6 does not officially support newer versions, but we test
-          # experimentally to track upstream compatibility.
+          # --ignore-requires-python: pyproject.toml caps at <3.12 because Trac 1.6
+          # does not officially support newer versions; we bypass it for experiments.
           pip install --ignore-requires-python -e .
           pip install pytest
 
