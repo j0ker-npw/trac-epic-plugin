@@ -8,7 +8,7 @@ version = "1.4.0"
 description = "Epic <-> ticket linking for Trac 1.6 (M:N relations, changelog, XML-RPC)"
 readme = "README.md"
 requires-python = ">=3.9,<3.12"
-license = {text = "BSD-3-Clause"}
+license = "BSD-3-Clause"
 authors = [{ name = "TracEpicPlugin Contributors" }]
 keywords = ["trac", "plugin", "epic", "tickets", "issue-tracking"]
 dependencies = ["Trac>=1.6"]
