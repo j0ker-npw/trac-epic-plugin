@@ -21,3 +21,6 @@ htmlcov/
 
 # Abacus.AI internal marker (must never be committed)
 .abacus.donotdelete
+
+# MkDocs build output (Docs as Code)
+site/
