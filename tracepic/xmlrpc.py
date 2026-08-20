@@ -18,6 +18,7 @@ keeps working.
 from trac.core import Component, implements, TracError
 from trac.resource import Resource
 
+from tracepic import _, add_domain
 from tracepic.api import EpicLinkSystem
 
 try:
@@ -36,6 +37,8 @@ if HAS_TRACRPC:
         implements(IXMLRPCHandler)
 
         def __init__(self):
+            from pkg_resources import resource_filename
+            add_domain(self.env.path, resource_filename('tracepic', 'locale'))
             self.epics = EpicLinkSystem(self.env)
 
         # -- IXMLRPCHandler --------------------------------------------
@@ -101,11 +104,11 @@ if HAS_TRACRPC:
             # per-ticket permission policies to match correctly.
             resource = Resource('ticket', int(ticket_id))
             if 'TICKET_VIEW' not in req.perm(resource):
-                raise TracError("TICKET_VIEW permission required for #%s"
-                                % ticket_id)
+                raise TracError(_("TICKET_VIEW permission required for #%(id)s")
+                                % {'id': ticket_id})
 
         def _require_modify(self, req, ticket_id):
             resource = Resource('ticket', int(ticket_id))
             if 'TICKET_MODIFY' not in req.perm(resource):
-                raise TracError("TICKET_MODIFY permission required for #%s"
-                                % ticket_id)
+                raise TracError(_("TICKET_MODIFY permission required for #%(id)s")
+                                % {'id': ticket_id})

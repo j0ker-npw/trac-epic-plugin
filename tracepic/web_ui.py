@@ -28,8 +28,9 @@ from trac.web.chrome import (ITemplateProvider, Chrome, add_script,
                              add_script_data, add_stylesheet)
 from trac.util.datefmt import (from_utimestamp, format_datetime, user_time,
                                pretty_timedelta, datetime_now, localtz)
-from trac.util.translation import _
+from trac.util.translation import _ as trac_
 
+from tracepic import _, add_domain
 from tracepic.api import EpicLinkSystem
 
 EPIC_TYPE = 'epic'
@@ -46,15 +47,18 @@ SORTABLE_FIELDS = ('id', 'summary', 'component', 'type', 'status', 'owner',
 # ``ticket`` in trac.ini (that is its user-facing name) but rendered as an
 # internal ``id`` field; ``priority`` uses the compact single-letter "P"
 # header (the full name is exposed via the sort link's title attribute).
+# Note: These are wrapped in N_() for deferred translation (actual translation
+# happens in _columns() method when request context is available).
+from tracepic import N_
 FIELD_LABELS = {
-    'id': 'Ticket',
-    'summary': 'Summary',
-    'component': 'Component',
-    'type': 'Type',
-    'status': 'Status',
-    'owner': 'Owner',
-    'modified': 'Modified',
-    'priority': 'P',
+    'id': N_('Ticket'),
+    'summary': N_('Summary'),
+    'component': N_('Component'),
+    'type': N_('Type'),
+    'status': N_('Status'),
+    'owner': N_('Owner'),
+    'modified': N_('Modified'),
+    'priority': N_('P'),
 }
 
 # Accepted tokens in ``[epic] linked_fields`` mapped to the internal field
@@ -122,6 +126,8 @@ class EpicWebUI(Component):
         ``ticket,summary,type,status``.""")
 
     def __init__(self):
+        from pkg_resources import resource_filename
+        add_domain(self.env.path, resource_filename('tracepic', 'locale'))
         self.epics = EpicLinkSystem(self.env)
 
     # ------------------------------------------------------------------
@@ -164,7 +170,7 @@ class EpicWebUI(Component):
         fields = self._parse_fields(raw)
         if not fields:
             fields = self._parse_fields(DEFAULT_FIELDS)
-        return [(f, FIELD_LABELS[f]) for f in fields]
+        return [(f, _(FIELD_LABELS[f])) for f in fields]
 
     @staticmethod
     def _parse_fields(raw):
@@ -248,6 +254,18 @@ class EpicWebUI(Component):
             'sort': {'field': sort_field, 'order': sort_order},
             'page_size': page_size,
             'columns': [f for f, _label in columns],
+            'i18n': {
+                'remove_title': _('Remove this link'),
+                'remove_btn': _('Remove'),
+                'confirm_remove': _('Remove link to #%(id)s?'),
+                'showing': _('Showing %(start)s–%(end)s of %(total)s'),
+                'prev': _('« Prev'),
+                'next': _('Next »'),
+                'error': _('Error'),
+                'request_failed': _('Request failed (%(status)s)'),
+                'select_first': _('Select a ticket first'),
+                'already_existed': _('Link already existed'),
+            },
         }})
         add_stylesheet(req, 'tracepic/epic.css')
         add_script(req, 'tracepic/epic.js')
@@ -281,13 +299,13 @@ class EpicWebUI(Component):
         """Add or remove a link.  Expects a POST with ``action``,
         ``epic_id`` and ``ticket_id``.  Returns JSON."""
         if req.method != 'POST':
-            return self._send_json(req, {'error': 'POST required'}, status=405)
+            return self._send_json(req, {'error': _('POST required')}, status=405)
 
         # CSRF protection: validate Trac's form token explicitly.
         token = req.args.get('__FORM_TOKEN')
         if token != req.form_token:
             return self._send_json(
-                req, {'error': 'Invalid form token'}, status=400)
+                req, {'error': _('Invalid form token')}, status=400)
 
         action = req.args.get('action')
         try:
@@ -295,7 +313,7 @@ class EpicWebUI(Component):
             ticket_id = int(req.args.get('ticket_id'))
         except (TypeError, ValueError):
             return self._send_json(
-                req, {'error': 'epic_id and ticket_id must be integers'},
+                req, {'error': _('epic_id and ticket_id must be integers')},
                 status=400)
 
         # Enforce TICKET_MODIFY on *both* specific tickets, not just the
@@ -320,7 +338,7 @@ class EpicWebUI(Component):
                     self.env, epic_id, ticket_id, author)
             else:
                 return self._send_json(
-                    req, {'error': 'Unknown action: %r' % action},
+                    req, {'error': _('Unknown action: %(action)s') % {'action': action}},
                     status=400)
         except TracError as exc:
             return self._send_json(req, {'error': str(exc)}, status=400)
@@ -454,9 +472,9 @@ class EpicWebUI(Component):
                 now = datetime_now(localtz)
                 relative = pretty_timedelta(dt, now)
                 if dt > now:
-                    modified = _("in %(relative)s", relative=relative)
+                    modified = trac_("in %(relative)s", relative=relative)
                 else:
-                    modified = _("%(relative)s ago", relative=relative)
+                    modified = trac_("%(relative)s ago", relative=relative)
             except Exception:
                 modified = ''
                 modified_title = ''

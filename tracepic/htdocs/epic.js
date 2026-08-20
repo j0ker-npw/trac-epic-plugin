@@ -192,8 +192,8 @@
         var $btn = $("<button/>").attr("type", "button")
           .addClass("epic-remove-btn")
           .attr("data-other-id", item.id)
-          .attr("title", "Remove this link")
-          .text("Remove");
+          .attr("title", conf.i18n.remove_title)
+          .text(conf.i18n.remove_btn);
         $tr.append($("<td/>").addClass("epic-col-actions").append($btn));
       }
       $tbody.append($tr);
@@ -210,8 +210,12 @@
 
     var start = (state.page - 1) * state.pageSize + 1;
     var end = Math.min(state.page * state.pageSize, total);
+    var showingText = conf.i18n.showing
+      .replace('%(start)s', start)
+      .replace('%(end)s', end)
+      .replace('%(total)s', total);
     $pager.append($("<span/>").addClass("epic-paging-info")
-      .text("Showing " + start + "\u2013" + end + " of " + total));
+      .text(showingText));
 
     var $nav = $("<span/>").addClass("epic-paging-nav");
 
@@ -227,12 +231,12 @@
       return $a;
     }
 
-    $nav.append(pageBtn("\u00AB Prev", state.page - 1, state.page <= 1,
+    $nav.append(pageBtn(conf.i18n.prev, state.page - 1, state.page <= 1,
                         false));
     for (var p = 1; p <= numPages; p++) {
       $nav.append(pageBtn(String(p), p, false, p === state.page));
     }
-    $nav.append(pageBtn("Next \u00BB", state.page + 1,
+    $nav.append(pageBtn(conf.i18n.next, state.page + 1,
                         state.page >= numPages, false));
 
     $pager.append($nav).show();
@@ -333,7 +337,8 @@
     // Remove link (with confirmation).
     $section.on("click", ".epic-remove-btn", function () {
       var otherId = $(this).data("other-id");
-      if (!window.confirm("Remove link to #" + otherId + "?")) {
+      var confirmMsg = conf.i18n.confirm_remove.replace('%(id)s', otherId);
+      if (!window.confirm(confirmMsg)) {
         return;
       }
       var $btn = $(this).prop("disabled", true);
@@ -343,12 +348,12 @@
             state.links = resp.links || [];
             render(conf, $section, state);
           } else {
-            showMsg($section, (resp && resp.error) || "Error", true);
+            showMsg($section, (resp && resp.error) || conf.i18n.error, true);
             $btn.prop("disabled", false);
           }
         })
         .fail(function (xhr) {
-          showMsg($section, errText(xhr), true);
+          showMsg($section, errText(conf, xhr), true);
           $btn.prop("disabled", false);
         });
     });
@@ -357,7 +362,7 @@
     $section.on("click", "#epic-add-btn", function () {
       var otherId = parseInt($section.find("#epic-add-selected").val(), 10);
       if (!otherId) {
-        showMsg($section, "Select a ticket first", true);
+        showMsg($section, conf.i18n.select_first, true);
         return;
       }
       var $btn = $(this).prop("disabled", true);
@@ -369,15 +374,15 @@
             $section.find("#epic-add-input").val("");
             $section.find("#epic-add-selected").val("");
             if (!resp.changed) {
-              showMsg($section, "Link already existed", false);
+              showMsg($section, conf.i18n.already_existed, false);
             }
           } else {
-            showMsg($section, (resp && resp.error) || "Error", true);
+            showMsg($section, (resp && resp.error) || conf.i18n.error, true);
           }
           $btn.prop("disabled", true);
         })
         .fail(function (xhr) {
-          showMsg($section, errText(xhr), true);
+          showMsg($section, errText(conf, xhr), true);
           $btn.prop("disabled", false);
         });
     });
@@ -385,12 +390,12 @@
     bindAutocomplete(conf, $section);
   }
 
-  function errText(xhr) {
+  function errText(conf, xhr) {
     try {
       var j = JSON.parse(xhr.responseText);
       if (j && j.error) { return j.error; }
     } catch (e) { /* ignore */ }
-    return "Request failed (" + xhr.status + ")";
+    return conf.i18n.request_failed.replace('%(status)s', xhr.status);
   }
 
   // Lightweight autocomplete backed by /epic/search.

@@ -4,6 +4,39 @@ All notable changes to TracEpicPlugin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.4.2] - 2026-08-20
+
+This is a localization release adding full internationalization (i18n) support.
+
+### Added
+- **Internationalization (i18n)** with Babel/gettext integration. The plugin now follows the user's 
+  Trac `Localization` settings, with automatic fallback to English (US) when translations are unavailable.
+- **Russian (ru) translations** for all user-facing strings: UI labels, error messages, form placeholders, 
+  pagination controls, and XML-RPC permission errors (36 strings total).
+- **Translation domain** `tracepic` registered in all components (`EpicLinkSystem`, `EpicWebUI`, `EpicXmlRpc`) 
+  via `domain_functions()` and `add_domain()`.
+- Native Jinja2 template localization: all strings in `epic_section.html` use `{{ _('...') }}` syntax.
+- Client-side (JavaScript) localization: server translates UI strings and passes them to `epic.js` via 
+  `add_script_data` as `i18n` dictionary (prev/next buttons, confirmation dialogs, error messages).
+- Babel configuration: `babel.cfg`, `message_extractors` in `setup.py`, `locale/` package data in 
+  `pyproject.toml`.
+- Complete translation catalog: `tracepic/locale/messages.pot` (template), `tracepic/locale/ru/LC_MESSAGES/tracepic.po` 
+  (source), `tracepic/locale/ru/LC_MESSAGES/tracepic.mo` (compiled).
+
+### Changed
+- **Template syntax**: converted `epic_section.html` from Genshi-style comments (`##`) and variable 
+  interpolation (`${}`) to proper Jinja2 syntax (`{# ... #}`, `{{ ... }}`).
+- **Column labels** in `FIELD_LABELS` dictionary now wrapped in `N_()` for deferred translation 
+  (actual translation happens in `_columns()` method when request context is available).
+- **Date formatting**: `_decorate()` method now uses `trac_()` (Trac core domain) for relative 
+  date strings ("in X", "X ago") to maintain consistency with Trac's own formatting.
+
+### Technical
+- Build dependency: `Babel>=2.9` added to `pyproject.toml` `requires`.
+- Babel workflow commands available: `python setup.py extract_messages`, `init_catalog`, 
+  `update_catalog`, `compile_catalog`.
+- All 49 tests pass (47 Python + 2 JavaScript).
+
 ## [1.4.1] - 2026-08-20
 
 This is a maintenance release addressing notification side-effects of epic link changes.

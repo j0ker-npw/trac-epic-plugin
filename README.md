@@ -143,6 +143,29 @@ priority name revealed on hover, so it does not eat into the width of the
 Summary column.  **Closed** tickets have their whole row greyed out
 (Trac-style) with a strike-through ticket-id link.
 
+### Localization (i18n)
+
+The plugin supports internationalization via Babel/gettext and follows the user's  
+Trac `Localization` settings (user/environment locale). When no translation is  
+available, it automatically falls back to **English (US)**.
+
+**Supported languages:**
+- **English (en)** — built-in (msgid strings)
+- **Russian (ru)** — full translation (36 strings)
+
+All user-facing text is localized: UI labels, error messages, form placeholders,  
+pagination controls, confirmation dialogs, and XML-RPC permission errors.
+
+**Adding new translations:**
+
+1. Extract messages: `python setup.py extract_messages -o tracepic/locale/messages.pot`
+2. Create new catalog (e.g. German): `python setup.py init_catalog -l de -i tracepic/locale/messages.pot -d tracepic/locale`
+3. Translate strings in `tracepic/locale/de/LC_MESSAGES/messages.po`
+4. Compile: `python setup.py compile_catalog -d tracepic/locale -l de`
+5. Rename compiled catalog: `mv tracepic/locale/de/LC_MESSAGES/messages.mo tracepic/locale/de/LC_MESSAGES/tracepic.mo`
+
+The catalog will be picked up automatically when Trac's locale matches `de`.
+
 ### XML-RPC API
 
 Requires the [XmlRpcPlugin](https://trac-hacks.org/wiki/XmlRpcPlugin)
@@ -385,6 +408,30 @@ linked_page_size = 10
 во всплывающей подсказке при наведении — чтобы не сокращать ширину столбца
 Summary. Закрытые (**closed**) тикеты отображаются серой строкой (в стиле
 Trac) с зачёркнутым номером тикета.
+
+### Локализация (i18n)
+
+Плагин поддерживает интернационализацию через Babel/gettext и следует настройкам  
+`Localization` пользователя/окружения Trac. При отсутствии перевода автоматически  
+используется **English (US)**.
+
+**Поддерживаемые языки:**
+- **English (en)** — встроенный (исходные строки msgid)
+- **Russian (ru)** — полный перевод (36 строк)
+
+Локализованы все пользовательские тексты: метки интерфейса, сообщения об ошибках,  
+подсказки форм, элементы постраничного вывода, диалоги подтверждения и ошибки  
+разрешений XML-RPC.
+
+**Добавление новых переводов:**
+
+1. Извлечь строки: `python setup.py extract_messages -o tracepic/locale/messages.pot`
+2. Создать каталог (например, для немецкого): `python setup.py init_catalog -l de -i tracepic/locale/messages.pot -d tracepic/locale`
+3. Перевести строки в `tracepic/locale/de/LC_MESSAGES/messages.po`
+4. Скомпилировать: `python setup.py compile_catalog -d tracepic/locale -l de`
+5. Переименовать: `mv tracepic/locale/de/LC_MESSAGES/messages.mo tracepic/locale/de/LC_MESSAGES/tracepic.mo`
+
+Каталог подхватится автоматически при соответствующей локали Trac.
 
 ### XML-RPC API
 

@@ -22,7 +22,7 @@ from setuptools import setup, find_packages
 # in legacy mode.  We must explicitly declare packages and data files here.
 setup(
     name='TracEpicPlugin',
-    version='1.4.1',
+    version='1.4.2',
     python_requires='>=3.9,<3.12',
     packages=find_packages(exclude=['tests', 'tests.*']),
     package_data={
@@ -30,6 +30,9 @@ setup(
             'templates/*.html',
             'htdocs/*.css',
             'htdocs/*.js',
+            'locale/*/LC_MESSAGES/*.mo',
+            'locale/*/LC_MESSAGES/*.po',
+            'locale/messages.pot',
         ],
     },
     entry_points={
@@ -37,6 +40,12 @@ setup(
             'tracepic.api = tracepic.api',
             'tracepic.web_ui = tracepic.web_ui',
             'tracepic.xmlrpc = tracepic.xmlrpc',
+        ],
+    },
+    message_extractors={
+        'tracepic': [
+            ('**.py', 'python', None),
+            ('**/templates/**.html', 'jinja2', None),
         ],
     },
 )

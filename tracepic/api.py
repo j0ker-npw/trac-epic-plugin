@@ -24,6 +24,8 @@ from trac.env import IEnvironmentSetupParticipant
 from trac.ticket.api import ITicketChangeListener, TicketSystem
 from trac.ticket.model import Ticket
 
+from tracepic import _, add_domain
+
 # Name of the plugin schema entry stored in the ``system`` table.
 PLUGIN_NAME = 'tracepic'
 # Current schema version owned by this plugin.
@@ -58,6 +60,10 @@ class EpicLinkSystem(Component):
     """Central component managing epic <-> ticket links."""
 
     implements(IEnvironmentSetupParticipant, ITicketChangeListener)
+
+    def __init__(self):
+        from pkg_resources import resource_filename
+        add_domain(self.env.path, resource_filename('tracepic', 'locale'))
 
     # ------------------------------------------------------------------
     # IEnvironmentSetupParticipant
@@ -346,7 +352,7 @@ class EpicLinkSystem(Component):
         ticket_id = int(ticket_id)
 
         if epic_id == ticket_id:
-            raise TracError("A ticket cannot be linked to itself.")
+            raise TracError(_("A ticket cannot be linked to itself."))
 
         try:
             with env.db_transaction as db:
@@ -482,10 +488,10 @@ class EpicLinkSystem(Component):
 
     def _assert_ticket_exists(self, db, ticket_id, role):
         """Raise :class:`TracError` if *ticket_id* does not exist."""
-        for _ in db("SELECT 1 FROM ticket WHERE id=%s", (int(ticket_id),)):
+        for _row in db("SELECT 1 FROM ticket WHERE id=%s", (int(ticket_id),)):
             return
-        raise TracError("The %s ticket #%d does not exist."
-                        % (role, int(ticket_id)))
+        raise TracError(_("The %(role)s ticket #%(id)d does not exist.")
+                        % {'role': role, 'id': int(ticket_id)})
 
     def _write_change(self, db, ticket_id, author, when, oldvalue, newvalue):
         """Insert a changelog row into ``ticket_change``.
