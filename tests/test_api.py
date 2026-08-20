@@ -9,10 +9,47 @@ import unittest
 
 from trac.test import EnvironmentStub
 from trac.ticket.model import Ticket
-from trac.core import TracError
+from trac.ticket.api import ITicketChangeListener
+from trac.core import Component, implements, TracError
 
 from tracepic.api import (EpicLinkSystem, CHANGELOG_FIELD,
                           PLUGIN_SCHEMA_VERSION)
+
+
+class RecordingTicketChangeListener(Component):
+    """Test double capturing every ``ticket_changed`` invocation.
+
+    Registered as a real Trac ``ITicketChangeListener`` component so it is
+    exercised through the exact same ``TicketSystem(env).change_listeners``
+    path the production code uses.  Each call is appended to :attr:`calls` as
+    a dict; tests reset the list via :meth:`reset` in their setup.
+    """
+
+    implements(ITicketChangeListener)
+
+    calls = []
+
+    def reset(self):
+        self.calls = []
+
+    def ticket_created(self, ticket):
+        pass
+
+    def ticket_changed(self, ticket, comment, author, old_values):
+        self.calls.append({'ticket_id': int(ticket.id),
+                           'comment': comment,
+                           'author': author,
+                           'old_values': old_values})
+
+    def ticket_deleted(self, ticket):
+        pass
+
+    def ticket_comment_modified(self, ticket, cdate, author, comment,
+                                old_comment):
+        pass
+
+    def ticket_change_deleted(self, ticket, cdate, changes):
+        pass
 
 
 def _make_ticket(env, summary, ttype='task', status='new'):
@@ -28,8 +65,13 @@ class EpicLinkSystemTestCase(unittest.TestCase):
 
     def setUp(self):
         self.env = EnvironmentStub(
-            enable=['trac.*', 'tracepic.*'], default_data=True)
+            enable=['trac.*', 'tracepic.*',
+                    RecordingTicketChangeListener.__module__ + '.*'],
+            default_data=True)
         self.epics = EpicLinkSystem(self.env)
+        # Recording listener singleton for this env; start with a clean slate.
+        self.listener = RecordingTicketChangeListener(self.env)
+        self.listener.reset()
         # Create the plugin schema.
         self.epics.upgrade_environment()
 
@@ -131,6 +173,46 @@ class EpicLinkSystemTestCase(unittest.TestCase):
             WHERE field=%s AND newvalue=%s
             """, (CHANGELOG_FIELD, '')))
         self.assertEqual(2, len(removals))
+
+    # -- ITicketChangeListener notifications ---------------------------
+    def test_listeners_called_on_add_link(self):
+        # add_link must fire ticket_changed exactly once per affected ticket
+        # (epic + linked ticket), with old_values reflecting the pre-change
+        # (empty) epic_link value for both.
+        epic = _make_ticket(self.env, 'Epic', ttype='epic')
+        t1 = _make_ticket(self.env, 'Task')
+        self.listener.reset()
+
+        self.assertTrue(self.epics.add_link(self.env, epic, t1, 'erin'))
+
+        self.assertEqual(2, len(self.listener.calls),
+                         "ticket_changed must fire once per affected ticket")
+        by_ticket = {c['ticket_id']: c for c in self.listener.calls}
+        self.assertEqual({epic, t1}, set(by_ticket))
+        for tid, call in by_ticket.items():
+            self.assertEqual('erin', call['author'])
+            self.assertEqual({CHANGELOG_FIELD: ''}, call['old_values'])
+
+    def test_listeners_called_on_remove_link(self):
+        # remove_link must fire ticket_changed exactly once per affected
+        # ticket, with old_values holding the link that existed before removal:
+        # the epic referenced '#<ticket_id>', the ticket referenced '#<epic_id>'.
+        epic = _make_ticket(self.env, 'Epic', ttype='epic')
+        t1 = _make_ticket(self.env, 'Task')
+        self.epics.add_link(self.env, epic, t1, 'frank')
+        self.listener.reset()  # ignore the notifications from add_link
+
+        self.assertTrue(self.epics.remove_link(self.env, epic, t1, 'frank'))
+
+        self.assertEqual(2, len(self.listener.calls),
+                         "ticket_changed must fire once per affected ticket")
+        by_ticket = {c['ticket_id']: c for c in self.listener.calls}
+        self.assertEqual({epic, t1}, set(by_ticket))
+        self.assertEqual('frank', by_ticket[epic]['author'])
+        self.assertEqual({CHANGELOG_FIELD: '#%d' % t1},
+                         by_ticket[epic]['old_values'])
+        self.assertEqual({CHANGELOG_FIELD: '#%d' % epic},
+                         by_ticket[t1]['old_values'])
 
     # -- summary helper ------------------------------------------------
     def test_get_ticket_summary(self):

@@ -21,7 +21,8 @@ import time
 
 from trac.core import Component, implements, TracError
 from trac.env import IEnvironmentSetupParticipant
-from trac.ticket.api import ITicketChangeListener
+from trac.ticket.api import ITicketChangeListener, TicketSystem
+from trac.ticket.model import Ticket
 
 # Name of the plugin schema entry stored in the ``system`` table.
 PLUGIN_NAME = 'tracepic'
@@ -386,6 +387,13 @@ class EpicLinkSystem(Component):
             return False
         self.log.debug("TracEpicPlugin linked epic #%d <-> ticket #%d by %s",
                        epic_id, ticket_id, author)
+        # The transaction has committed successfully at this point.  Fire the
+        # ITicketChangeListener notifications that ``_write_change`` cannot
+        # produce (see its docstring).  Both tickets went from "no link" to
+        # "linked", so their previous ``epic_link`` value was empty.
+        self._notify_listeners(env, epic_id, ticket_id, author, comment,
+                               old_epic={CHANGELOG_FIELD: ''},
+                               old_ticket={CHANGELOG_FIELD: ''})
         return True
 
     def remove_link(self, env, epic_id, ticket_id, author, comment=''):
@@ -415,11 +423,63 @@ class EpicLinkSystem(Component):
                                oldvalue='#%d' % epic_id, newvalue='')
         self.log.debug("TracEpicPlugin unlinked epic #%d <-> ticket #%d by %s",
                        epic_id, ticket_id, author)
+        # The transaction has committed successfully at this point.  Fire the
+        # ITicketChangeListener notifications for both tickets.  The previous
+        # ``epic_link`` value reflected the link that was just removed: the
+        # epic used to reference the ticket, and the ticket used to reference
+        # the epic.
+        self._notify_listeners(env, epic_id, ticket_id, author, comment,
+                               old_epic={CHANGELOG_FIELD: '#%d' % ticket_id},
+                               old_ticket={CHANGELOG_FIELD: '#%d' % epic_id})
         return True
 
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
+    def _notify_listeners(self, env, epic_id, ticket_id, author, comment,
+                          old_epic, old_ticket):
+        """Fire ``ITicketChangeListener.ticket_changed`` for both tickets.
+
+        This is called *after* the ``epic_links`` transaction has committed,
+        so listeners see the up-to-date database state (R-1, R-4).  It works
+        around the limitation documented on :meth:`_write_change`: because the
+        changelog is written with raw SQL rather than through the ``Ticket``
+        model, Trac never fires the standard change notifications for the two
+        affected tickets.  Re-emitting them here restores e-mail
+        notifications and third-party ``ITicketChangeListener`` side effects.
+
+        :param old_epic: ``old_values`` mapping for the epic ticket, i.e. the
+            ``epic_link`` value *before* the change.
+        :param old_ticket: ``old_values`` mapping for the linked ticket.
+
+        Robustness guarantees:
+
+        * The ``Ticket`` object is loaded *after* the commit; if it cannot be
+          loaded (e.g. deleted concurrently) the ticket is skipped with a
+          warning rather than aborting the notification of the other one
+          (R-4).
+        * An exception raised by any individual listener is caught and logged
+          so it neither interrupts the remaining listeners nor propagates back
+          to the caller (the data transaction is already committed) (R-3).
+        """
+        listeners = TicketSystem(env).change_listeners
+        for tid, old_values in ((epic_id, old_epic), (ticket_id, old_ticket)):
+            try:
+                ticket_obj = Ticket(env, tid)
+            except Exception:
+                self.log.warning(
+                    "TracEpicPlugin: could not load ticket #%s for "
+                    "ITicketChangeListener notification", tid)
+                continue
+            for listener in listeners:
+                try:
+                    listener.ticket_changed(ticket_obj, comment, author,
+                                            old_values)
+                except Exception:
+                    self.log.exception(
+                        "TracEpicPlugin: error in listener "
+                        "%s.ticket_changed", type(listener).__name__)
+
     def _assert_ticket_exists(self, db, ticket_id, role):
         """Raise :class:`TracError` if *ticket_id* does not exist."""
         for _ in db("SELECT 1 FROM ticket WHERE id=%s", (int(ticket_id),)):
