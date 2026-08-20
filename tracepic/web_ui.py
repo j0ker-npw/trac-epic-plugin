@@ -234,6 +234,7 @@ class EpicWebUI(Component):
             'sort_field': sort_field,
             'sort_order': sort_order,
             'columns': columns,
+            '_': _,
         }
         # render_fragment produces just the fragment (no page skeleton),
         # which is what we hand to the browser for injection.  The fragment

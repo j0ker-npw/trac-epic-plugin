@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "TracEpicPlugin"
-version = "1.4.2"
+version = "1.4.3"
 description = "Epic <-> ticket linking for Trac 1.6 (M:N relations, changelog, XML-RPC)"
 readme = "README.md"
 requires-python = ">=3.9,<3.12"

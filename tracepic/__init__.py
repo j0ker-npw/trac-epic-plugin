@@ -6,7 +6,7 @@ regular tickets, a web UI integrated into the ticket page, an XML-RPC API
 (via the tracrpc / XmlRpcPlugin), and changelog integration.
 """
 
-__version__ = '1.4.2'
+__version__ = '1.4.3'
 __all__ = ['api', 'web_ui', 'xmlrpc']
 
 # i18n domain for translations

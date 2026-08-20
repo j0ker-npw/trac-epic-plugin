@@ -4,6 +4,14 @@ All notable changes to TracEpicPlugin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.4.3] - 2026-08-21
+
+### Fixed
+- **Jinja2 template localization**: added translation function `_` to the template context (`frag_data`) 
+  in `EpicWebUI._inject_epic_section()`. Without this, Jinja2 templates displayed raw `{{ _('...') }}` 
+  strings instead of translating them. Now all user-facing strings in the "Epics" / "Linked Tickets" 
+  section are correctly translated according to the user's locale settings.
+
 ## [1.4.2] - 2026-08-20
 
 This is a localization release adding full internationalization (i18n) support.
