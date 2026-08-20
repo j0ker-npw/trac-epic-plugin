@@ -5,7 +5,16 @@ the ticket page by epic.js.  This fragment is only the *shell*: title,
 sortable table header, an empty table body, a pager container and the add
 form.  epic.js fills the body and pager from the ``links`` array handed
 over via add_script_data, applying the sort order and pagination on the
-client.  Expected context variables:
+client.
+
+Note on syntax: Trac 1.6 configures its Jinja2 environment with custom
+delimiters — variables are interpolated with a dollar-brace expression
+(NOT double curly braces), while blocks and comments use the Jinja2
+defaults.  Translations go through the gettext callable exposed as the
+underscore name, which is the plugin's own tracepic domain injected into
+the template context by the web UI.
+
+Expected context variables:
   ticket_id   : int   - the ticket currently being viewed
   is_epic     : bool  - True when the viewed ticket is of type 'epic'
   can_modify  : bool  - True when the user has TICKET_MODIFY
@@ -14,15 +23,16 @@ client.  Expected context variables:
   columns     : list  - ordered (field, label) tuples to render as the
                         sortable table header (from [epic] linked_fields).
                         The Remove button column is always appended last,
-                        independently of this list. #}
+                        independently of this list.
+  _           : func  - the tracepic-domain gettext callable. #}
 <div id="epic-links" class="epic-links"
-     data-ticket-id="{{ ticket_id }}"
-     data-is-epic="{{ '1' if is_epic else '0' }}">
+     data-ticket-id="${ ticket_id }"
+     data-is-epic="${ '1' if is_epic else '0' }">
   <h3 class="epic-links-title">
     {% if is_epic %}
-    {{ _('Linked Tickets') }}
+    ${ _('Linked Tickets') }
     {% else %}
-    {{ _('Epics') }}
+    ${ _('Epics') }
     {% endif %}
   </h3>
 
@@ -30,10 +40,10 @@ client.  Expected context variables:
     <thead>
       <tr>
         {% for field, label in columns %}
-        <th class="epic-col-{{ field }} epic-sortable{{ ' ' + sort_order if field == sort_field else '' }}"
-            data-field="{{ field }}">
-          <a href="#" class="epic-sort" data-field="{{ field }}"
-             title="{{ _('Sort by %(label)s') % {'label': label} }}">{{ label }}<span class="epic-sort-arrow"></span></a>
+        <th class="epic-col-${ field } epic-sortable${ ' ' + sort_order if field == sort_field else '' }"
+            data-field="${ field }">
+          <a href="#" class="epic-sort" data-field="${ field }"
+             title="${ _('Sort by %(label)s') % {'label': label} }">${ label }<span class="epic-sort-arrow"></span></a>
         </th>
         {% endfor %}
         {% if can_modify %}
@@ -48,9 +58,9 @@ client.  Expected context variables:
 
   <p class="epic-empty" style="display:none">
     {% if is_epic %}
-    {{ _('No tickets are linked to this epic yet.') }}
+    ${ _('No tickets are linked to this epic yet.') }
     {% else %}
-    {{ _('This ticket does not belong to any epic yet.') }}
+    ${ _('This ticket does not belong to any epic yet.') }
     {% endif %}
   </p>
 
@@ -58,17 +68,17 @@ client.  Expected context variables:
   <div class="epic-add-form">
     <label for="epic-add-input">
       {% if is_epic %}
-      {{ _('Link a ticket:') }}
+      ${ _('Link a ticket:') }
       {% else %}
-      {{ _('Add to epic:') }}
+      ${ _('Add to epic:') }
       {% endif %}
     </label>
     <input type="text" id="epic-add-input" class="epic-add-input"
            autocomplete="off"
-           placeholder="{{ _('Type #id or summary...') }}" />
+           placeholder="${ _('Type #id or summary...') }" />
     <input type="hidden" id="epic-add-selected" value="" />
     <button type="button" id="epic-add-btn" class="epic-add-btn"
-            disabled="disabled">{{ _('Add link') }}</button>
+            disabled="disabled">${ _('Add link') }</button>
     <div id="epic-autocomplete" class="epic-autocomplete"></div>
     <span id="epic-add-msg" class="epic-add-msg"></span>
   </div>

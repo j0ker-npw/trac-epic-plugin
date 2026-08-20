@@ -4,13 +4,28 @@ All notable changes to TracEpicPlugin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.4.4] - 2026-08-21
+
+### Fixed
+- **Jinja2 template delimiters** (the actual root cause of untranslated strings): Trac 1.6 configures its
+  Jinja2 environment with *custom* delimiters — variables are interpolated with `${ ... }`, **not** the
+  Jinja2 default `{{ ... }}`. The template was previously written with `{{ ... }}`, so Trac treated those
+  as plain text and rendered them literally (e.g. `{{ _('Epics') }}` shown verbatim on the page). Converted
+  all variable expressions in `epic_section.html` from `{{ ... }}` to `${ ... }`. Blocks (`{% ... %}`) and
+  comments (`{# ... #}`) are unchanged (Trac keeps the defaults for those).
+- **Babel extraction config**: `babel.cfg` now mirrors Trac's Jinja2 delimiters
+  (`variable_start_string = ${`, `line_statement_prefix = #`, `line_comment_prefix = ##`) so `${ _('...') }`
+  calls in templates are correctly extracted into the catalog.
+- Verified end-to-end by rendering the fragment through Trac's `Chrome.render_fragment` with the `ru` locale
+  active: `${}` expressions interpolate and strings render translated (e.g. "Связанные тикеты").
+
 ## [1.4.3] - 2026-08-21
 
 ### Fixed
-- **Jinja2 template localization**: added translation function `_` to the template context (`frag_data`) 
-  in `EpicWebUI._inject_epic_section()`. Without this, Jinja2 templates displayed raw `{{ _('...') }}` 
-  strings instead of translating them. Now all user-facing strings in the "Epics" / "Linked Tickets" 
-  section are correctly translated according to the user's locale settings.
+- **Jinja2 template context**: added translation function `_` (the `tracepic` domain callable) to the
+  template context (`frag_data`) in `EpicWebUI._inject_epic_section()`. Necessary so template `_()` resolves
+  to the plugin's own domain rather than the Trac core domain. (This change alone was insufficient — see
+  1.4.4 for the delimiter fix that actually made translations render.)
 
 ## [1.4.2] - 2026-08-20
 

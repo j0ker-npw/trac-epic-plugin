@@ -7,9 +7,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: TracEpicPlugin 1.4.2\n"
+"Project-Id-Version: TracEpicPlugin 1.4.4\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-20 19:52+0000\n"
+"POT-Creation-Date: 2026-08-20 21:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -59,62 +59,62 @@ msgstr ""
 msgid "P"
 msgstr ""
 
-#: tracepic/web_ui.py:258
+#: tracepic/web_ui.py:259
 msgid "Remove this link"
 msgstr ""
 
-#: tracepic/web_ui.py:259
-msgid "Remove"
-msgstr ""
-
 #: tracepic/web_ui.py:260
-#, python-format
-msgid "Remove link to #%(id)s?"
+msgid "Remove"
 msgstr ""
 
 #: tracepic/web_ui.py:261
 #, python-format
-msgid "Showing %(start)s–%(end)s of %(total)s"
+msgid "Remove link to #%(id)s?"
 msgstr ""
 
 #: tracepic/web_ui.py:262
-msgid "« Prev"
+#, python-format
+msgid "Showing %(start)s–%(end)s of %(total)s"
 msgstr ""
 
 #: tracepic/web_ui.py:263
-msgid "Next »"
+msgid "« Prev"
 msgstr ""
 
 #: tracepic/web_ui.py:264
-msgid "Error"
+msgid "Next »"
 msgstr ""
 
 #: tracepic/web_ui.py:265
+msgid "Error"
+msgstr ""
+
+#: tracepic/web_ui.py:266
 #, python-format
 msgid "Request failed (%(status)s)"
 msgstr ""
 
-#: tracepic/web_ui.py:266
+#: tracepic/web_ui.py:267
 msgid "Select a ticket first"
 msgstr ""
 
-#: tracepic/web_ui.py:267
+#: tracepic/web_ui.py:268
 msgid "Link already existed"
 msgstr ""
 
-#: tracepic/web_ui.py:302
+#: tracepic/web_ui.py:303
 msgid "POST required"
 msgstr ""
 
-#: tracepic/web_ui.py:308
+#: tracepic/web_ui.py:309
 msgid "Invalid form token"
 msgstr ""
 
-#: tracepic/web_ui.py:316
+#: tracepic/web_ui.py:317
 msgid "epic_id and ticket_id must be integers"
 msgstr ""
 
-#: tracepic/web_ui.py:341
+#: tracepic/web_ui.py:342
 #, python-format
 msgid "Unknown action: %(action)s"
 msgstr ""
@@ -129,40 +129,40 @@ msgstr ""
 msgid "TICKET_MODIFY permission required for #%(id)s"
 msgstr ""
 
-#: tracepic/templates/epic_section.html:23
+#: tracepic/templates/epic_section.html:33
 msgid "Linked Tickets"
 msgstr ""
 
-#: tracepic/templates/epic_section.html:25
+#: tracepic/templates/epic_section.html:35
 msgid "Epics"
 msgstr ""
 
-#: tracepic/templates/epic_section.html:36
+#: tracepic/templates/epic_section.html:46
 #, python-format
 msgid "Sort by %(label)s"
 msgstr ""
 
-#: tracepic/templates/epic_section.html:51
+#: tracepic/templates/epic_section.html:61
 msgid "No tickets are linked to this epic yet."
 msgstr ""
 
-#: tracepic/templates/epic_section.html:53
+#: tracepic/templates/epic_section.html:63
 msgid "This ticket does not belong to any epic yet."
 msgstr ""
 
-#: tracepic/templates/epic_section.html:61
+#: tracepic/templates/epic_section.html:71
 msgid "Link a ticket:"
 msgstr ""
 
-#: tracepic/templates/epic_section.html:63
+#: tracepic/templates/epic_section.html:73
 msgid "Add to epic:"
 msgstr ""
 
-#: tracepic/templates/epic_section.html:68
+#: tracepic/templates/epic_section.html:78
 msgid "Type #id or summary..."
 msgstr ""
 
-#: tracepic/templates/epic_section.html:71
+#: tracepic/templates/epic_section.html:81
 msgid "Add link"
 msgstr ""
 

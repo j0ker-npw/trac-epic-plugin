@@ -7,8 +7,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: TracEpicPlugin 1.4.2\n"
-"Report-Msgid-Bugs-To: https://github.com/j0ker-npw/trac-epic-plugin/issues\n"
-"POT-Creation-Date: 2026-08-20 19:50+0000\n"
+"Report-Msgid-Bugs-To: https://github.com/j0ker-npw/trac-epic-"
+"plugin/issues\n"
+"POT-Creation-Date: 2026-08-20 21:14+0000\n"
 "PO-Revision-Date: 2026-08-20 20:00+0000\n"
 "Last-Translator: TracEpicPlugin Contributors\n"
 "Language: ru\n"
@@ -28,43 +29,6 @@ msgstr "Тикет не может быть связан сам с собой."
 #, python-format
 msgid "The %(role)s ticket #%(id)d does not exist."
 msgstr "%(role)s тикет #%(id)d не существует."
-
-#: tracepic/templates/epic_section.html:23
-msgid "Linked Tickets"
-msgstr "Связанные тикеты"
-
-#: tracepic/templates/epic_section.html:25
-msgid "Epics"
-msgstr "Эпики"
-
-#: tracepic/templates/epic_section.html:36
-#, python-format
-msgid "Sort by %(label)s"
-msgstr "Сортировка по %(label)s"
-
-#: tracepic/templates/epic_section.html:51
-msgid "No tickets are linked to this epic yet."
-msgstr "К этому эпику ещё не привязаны тикеты."
-
-#: tracepic/templates/epic_section.html:53
-msgid "This ticket does not belong to any epic yet."
-msgstr "Этот тикет ещё не принадлежит ни одному эпику."
-
-#: tracepic/templates/epic_section.html:61
-msgid "Link a ticket:"
-msgstr "Привязать тикет:"
-
-#: tracepic/templates/epic_section.html:63
-msgid "Add to epic:"
-msgstr "Добавить к эпику:"
-
-#: tracepic/templates/epic_section.html:68
-msgid "Type #id or summary..."
-msgstr "Введите #id или название..."
-
-#: tracepic/templates/epic_section.html:71
-msgid "Add link"
-msgstr "Добавить связь"
 
 #: tracepic/web_ui.py:54
 msgid "Ticket"
@@ -98,62 +62,62 @@ msgstr "Изменён"
 msgid "P"
 msgstr "П"
 
-#: tracepic/web_ui.py:258
+#: tracepic/web_ui.py:259
 msgid "Remove this link"
 msgstr "Удалить эту связь"
 
-#: tracepic/web_ui.py:259
+#: tracepic/web_ui.py:260
 msgid "Remove"
 msgstr "Удалить"
 
-#: tracepic/web_ui.py:260
+#: tracepic/web_ui.py:261
 #, python-format
 msgid "Remove link to #%(id)s?"
 msgstr "Удалить связь с #%(id)s?"
 
-#: tracepic/web_ui.py:261
+#: tracepic/web_ui.py:262
 #, python-format
 msgid "Showing %(start)s–%(end)s of %(total)s"
 msgstr "Показано %(start)s–%(end)s из %(total)s"
 
-#: tracepic/web_ui.py:262
+#: tracepic/web_ui.py:263
 msgid "« Prev"
 msgstr "« Назад"
 
-#: tracepic/web_ui.py:263
+#: tracepic/web_ui.py:264
 msgid "Next »"
 msgstr "Вперёд »"
 
-#: tracepic/web_ui.py:264
+#: tracepic/web_ui.py:265
 msgid "Error"
 msgstr "Ошибка"
 
-#: tracepic/web_ui.py:265
+#: tracepic/web_ui.py:266
 #, python-format
 msgid "Request failed (%(status)s)"
 msgstr "Запрос не выполнен (%(status)s)"
 
-#: tracepic/web_ui.py:266
+#: tracepic/web_ui.py:267
 msgid "Select a ticket first"
 msgstr "Сначала выберите тикет"
 
-#: tracepic/web_ui.py:267
+#: tracepic/web_ui.py:268
 msgid "Link already existed"
 msgstr "Связь уже существовала"
 
-#: tracepic/web_ui.py:302
+#: tracepic/web_ui.py:303
 msgid "POST required"
 msgstr "Требуется POST"
 
-#: tracepic/web_ui.py:308
+#: tracepic/web_ui.py:309
 msgid "Invalid form token"
 msgstr "Недействительный токен формы"
 
-#: tracepic/web_ui.py:316
+#: tracepic/web_ui.py:317
 msgid "epic_id and ticket_id must be integers"
 msgstr "epic_id и ticket_id должны быть целыми числами"
 
-#: tracepic/web_ui.py:341
+#: tracepic/web_ui.py:342
 #, python-format
 msgid "Unknown action: %(action)s"
 msgstr "Неизвестное действие: %(action)s"
@@ -167,3 +131,41 @@ msgstr "Требуется разрешение TICKET_VIEW для #%(id)s"
 #, python-format
 msgid "TICKET_MODIFY permission required for #%(id)s"
 msgstr "Требуется разрешение TICKET_MODIFY для #%(id)s"
+
+#: tracepic/templates/epic_section.html:33
+msgid "Linked Tickets"
+msgstr "Связанные тикеты"
+
+#: tracepic/templates/epic_section.html:35
+msgid "Epics"
+msgstr "Эпики"
+
+#: tracepic/templates/epic_section.html:46
+#, python-format
+msgid "Sort by %(label)s"
+msgstr "Сортировка по %(label)s"
+
+#: tracepic/templates/epic_section.html:61
+msgid "No tickets are linked to this epic yet."
+msgstr "К этому эпику ещё не привязаны тикеты."
+
+#: tracepic/templates/epic_section.html:63
+msgid "This ticket does not belong to any epic yet."
+msgstr "Этот тикет ещё не принадлежит ни одному эпику."
+
+#: tracepic/templates/epic_section.html:71
+msgid "Link a ticket:"
+msgstr "Привязать тикет:"
+
+#: tracepic/templates/epic_section.html:73
+msgid "Add to epic:"
+msgstr "Добавить к эпику:"
+
+#: tracepic/templates/epic_section.html:78
+msgid "Type #id or summary..."
+msgstr "Введите #id или название..."
+
+#: tracepic/templates/epic_section.html:81
+msgid "Add link"
+msgstr "Добавить связь"
+
