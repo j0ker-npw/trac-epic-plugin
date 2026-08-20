@@ -4,6 +4,32 @@ All notable changes to TracEpicPlugin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.4.1] - 2026-08-20
+
+This is a maintenance release addressing notification side-effects of epic link changes.
+
+### Fixed
+- **ITicketChangeListener notifications** are now fired after `add_link()` and `remove_link()` 
+  operations. Previously, epic link changes were written directly to `ticket_change` via raw SQL, 
+  bypassing `Ticket.save_changes()` and thus suppressing email notifications and other listener-based 
+  side effects (timeline entries, webhook triggers, etc.).
+- Both the epic and the linked ticket now receive a `ticket_changed` notification with appropriate 
+  `old_values` (`{'epic_link': ''}` for add operations, `{'epic_link': '#<ticket_id>'}` for 
+  remove operations).
+- Individual listener failures are caught and logged, ensuring one misbehaving listener does not 
+  prevent others from running or roll back the already-committed transaction.
+- Ticket objects are loaded **after** the database transaction commits, guaranteeing listeners 
+  receive the current ticket state.
+- The `comment` argument from `add_link()` / `remove_link()` is now correctly forwarded to 
+  `ticket_changed()` (previously was not passed).
+
+### Technical
+- Added private method `_notify_listeners()` in `EpicLinkSystem` (`tracepic/api.py`).
+- Added imports: `TicketSystem` from `trac.ticket.api`, `Ticket` from `trac.ticket.model`.
+- Extended test suite: `test_listeners_called_on_add_link` and `test_listeners_called_on_remove_link` 
+  in `tests/test_api.py` verify two `ticket_changed` calls with correct `old_values` for each operation.
+- All 49 tests pass (47 Python + 2 JavaScript).
+
 ## [1.4.0] - 2026-08-14
 
 This release addresses the findings of a security & code review, hardening

@@ -47,7 +47,7 @@ cd /path/to/trac-epic-plugin
 python3 -B setup.py bdist_egg
 
 # Copy the freshly built egg into your Trac environment's plugins directory
-sudo cp dist/TracEpicPlugin-1.0.2-py3.*.egg /path/to/trac-env/plugins/
+sudo cp dist/TracEpicPlugin-1.4.1-py3.*.egg /path/to/trac-env/plugins/
 
 # Apply database migration
 trac-admin /path/to/trac-env upgrade
@@ -61,7 +61,7 @@ sudo systemctl restart apache2
 > format (which Trac requires for drop-in `plugins/` archives) and is
 > harmless — the produced egg is valid. The old `tracepic.htdocs` /
 > `tracepic.templates` "Package would be ignored" warnings are **gone** as
-> of v1.0.2.
+> of v1.4.1.
 
 **Method 2: Trac in virtual environment (fully warning-free)**
 
@@ -73,8 +73,8 @@ source /path/to/trac/venv/bin/activate
 
 cd /path/to/trac-epic-plugin
 pip install build           # once
-python3 -m build            # -> dist/TracEpicPlugin-1.0.2-py3-none-any.whl
-pip install dist/TracEpicPlugin-1.0.2-py3-none-any.whl
+python3 -m build            # -> dist/TracEpicPlugin-1.4.1-py3-none-any.whl
+pip install dist/TracEpicPlugin-1.4.1-py3-none-any.whl
 
 # (editable install also works: pip install -e .)
 
@@ -239,15 +239,6 @@ change field named **`epic_link`** (constant `CHANGELOG_FIELD` in
 (old/new values are the referenced `#id`). If you filter or report on ticket
 history programmatically, match on `field = 'epic_link'`.
 
-> **Implementation note.** For efficiency and transactional consistency the
-> plugin writes these changelog rows (and the `changetime` bump) directly via
-> SQL rather than through Trac's `Ticket` model. As a consequence,
-> `ITicketChangeListener` notifications (e.g. e-mail) do **not** fire for link
-> changes. This trade-off is documented in `EpicLinkSystem._write_change`.
-> Orphaned links are still cleaned up automatically: the plugin implements
-> `ITicketChangeListener.ticket_deleted` to drop links referencing a deleted
-> ticket.
-
 ### Running the tests
 
 ```bash
@@ -301,7 +292,7 @@ cd /path/to/trac-epic-plugin
 python3 -B setup.py bdist_egg
 
 # Скопировать собранный egg в директорию plugins вашего окружения Trac
-sudo cp dist/TracEpicPlugin-1.0.2-py3.*.egg /path/to/trac-env/plugins/
+sudo cp dist/TracEpicPlugin-1.4.1-py3.*.egg /path/to/trac-env/plugins/
 
 # Применить миграцию БД
 trac-admin /path/to/trac-env upgrade
@@ -314,7 +305,7 @@ sudo systemctl restart apache2
 > уведомление `setup.py install is deprecated`. Оно неотъемлемо для формата
 > egg (который Trac требует для plugins-директории) и безвредно — собранный
 > egg корректен. Прежние предупреждения `tracepic.htdocs` /
-> `tracepic.templates` («Package would be ignored») **устранены** в v1.0.2.
+> `tracepic.templates` («Package would be ignored») **устранены** в v1.4.1.
 
 **Метод 2: Trac в виртуальном окружении (полностью без предупреждений)**
 
@@ -326,8 +317,8 @@ source /path/to/trac/venv/bin/activate
 
 cd /path/to/trac-epic-plugin
 pip install build           # однократно
-python3 -m build            # -> dist/TracEpicPlugin-1.0.2-py3-none-any.whl
-pip install dist/TracEpicPlugin-1.0.2-py3-none-any.whl
+python3 -m build            # -> dist/TracEpicPlugin-1.4.1-py3-none-any.whl
+pip install dist/TracEpicPlugin-1.4.1-py3-none-any.whl
 
 # (editable-установка тоже работает: pip install -e .)
 
@@ -459,15 +450,6 @@ Trac) с зачёркнутым номером тикета.
 поля **`epic_link`** (константа `CHANGELOG_FIELD` в `tracepic/api.py`). В
 истории Trac эти записи отображаются обобщённо (старое/новое значение — это
 `#id`). Для программной фильтрации истории используйте `field = 'epic_link'`.
-
-> **Замечание по реализации.** Ради производительности и транзакционной
-> целостности плагин пишет эти записи истории (и обновление `changetime`)
-> напрямую через SQL, а не через модель `Ticket` Trac. Как следствие,
-> уведомления `ITicketChangeListener` (например, e-mail) для изменений связей
-> **не** срабатывают. Компромисс задокументирован в
-> `EpicLinkSystem._write_change`. Осиротевшие связи при этом очищаются
-> автоматически: плагин реализует `ITicketChangeListener.ticket_deleted`,
-> удаляя связи, ссылающиеся на удалённый тикет.
 
 ### Запуск тестов
 
