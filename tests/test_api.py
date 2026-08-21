@@ -174,6 +174,81 @@ class EpicLinkSystemTestCase(unittest.TestCase):
             """, (CHANGELOG_FIELD, '')))
         self.assertEqual(2, len(removals))
 
+    def test_comment_row_written_on_add_link(self):
+        """add_link must write a 'comment' row for each affected ticket."""
+        epic = _make_ticket(self.env, 'Epic', ttype='epic')
+        t1 = _make_ticket(self.env, 'Task')
+        self.epics.add_link(self.env, epic, t1, 'alice')
+
+        # Each ticket should have both a comment row and an epic_link row
+        # with the same timestamp.
+        for ticket_id in [epic, t1]:
+            rows = list(self.env.db_query("""
+                SELECT field, time, oldvalue, newvalue
+                FROM ticket_change
+                WHERE ticket=%s ORDER BY field
+                """, (ticket_id,)))
+            # Should have exactly 2 rows: comment + epic_link
+            self.assertEqual(2, len(rows),
+                             f"Ticket #{ticket_id} should have 2 changelog rows")
+
+            comment_row = [r for r in rows if r[0] == 'comment'][0]
+            epic_link_row = [r for r in rows if r[0] == CHANGELOG_FIELD][0]
+
+            # Same timestamp (requirement R-2)
+            self.assertEqual(comment_row[1], epic_link_row[1],
+                             f"Ticket #{ticket_id}: comment and epic_link "
+                             "must share the same timestamp")
+
+            # Comment number is '1' (first change on a fresh ticket)
+            self.assertEqual('1', comment_row[2],
+                             f"Ticket #{ticket_id}: first change should be "
+                             "comment #1")
+            # newvalue is empty for comment rows
+            self.assertEqual('', comment_row[3])
+
+    def test_comment_row_written_on_remove_link(self):
+        """remove_link must write a 'comment' row for each affected ticket."""
+        epic = _make_ticket(self.env, 'Epic', ttype='epic')
+        t1 = _make_ticket(self.env, 'Task')
+        self.epics.add_link(self.env, epic, t1, 'bob')
+        # After add_link, both tickets have comment #1
+        # Now remove the link
+        self.epics.remove_link(self.env, epic, t1, 'bob')
+
+        # Each ticket should now have 4 rows total:
+        #   add: comment #1 + epic_link (set)
+        #   remove: comment #2 + epic_link (clear)
+        for ticket_id in [epic, t1]:
+            rows = list(self.env.db_query("""
+                SELECT field, time, oldvalue, newvalue
+                FROM ticket_change
+                WHERE ticket=%s ORDER BY time, field
+                """, (ticket_id,)))
+            self.assertEqual(4, len(rows),
+                             f"Ticket #{ticket_id} should have 4 changelog rows "
+                             "(2 from add, 2 from remove)")
+
+            # Group by time to pair comment + epic_link rows
+            from itertools import groupby
+            groups = [list(g) for _, g in groupby(rows, key=lambda r: r[1])]
+            self.assertEqual(2, len(groups),
+                             f"Ticket #{ticket_id} should have 2 distinct timestamps")
+
+            # First event (add): comment #1
+            add_comment = [r for r in groups[0] if r[0] == 'comment'][0]
+            self.assertEqual('1', add_comment[2],
+                             f"Ticket #{ticket_id}: add_link should create comment #1")
+
+            # Second event (remove): comment #2
+            remove_comment = [r for r in groups[1] if r[0] == 'comment'][0]
+            self.assertEqual('2', remove_comment[2],
+                             f"Ticket #{ticket_id}: remove_link should create comment #2")
+
+            # Both comment rows should have empty newvalue
+            self.assertEqual('', add_comment[3])
+            self.assertEqual('', remove_comment[3])
+
     # -- ITicketChangeListener notifications ---------------------------
     def test_listeners_called_on_add_link(self):
         # add_link must fire ticket_changed exactly once per affected ticket

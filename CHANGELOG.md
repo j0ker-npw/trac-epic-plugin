@@ -4,6 +4,29 @@ All notable changes to TracEpicPlugin are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.4.5] - 2026-08-21
+
+### Fixed
+- **Comment numbering for epic-link events**: `_write_change()` now writes a sequential `field='comment'`
+  row in addition to the `field='epic_link'` row (matching the behavior of `Ticket.save_changes()`). This
+  ensures that:
+  - Deep-links like `#comment:N` work correctly for epic events on the ticket page.
+  - `ITicketChangeListener` consumers can locate the change by its comment number (previously the comment
+    counter remained "frozen" at the last non-epic change).
+  - Both rows share the same `time` value, maintaining atomicity within the database transaction.
+- **Updated docstring**: `_write_change()` docstring now accurately reflects that `ITicketChangeListener`
+  notifications *are* fired (by `add_link` and `remove_link` after the transaction commits), correcting
+  outdated text from v1.2.0 that predated the v1.4.1 listener integration.
+
+### Technical
+- Comment numbering algorithm matches `Ticket.save_changes()` exactly (handles reply-to numbering, though
+  epic events themselves use simple sequential numbers).
+- Added comprehensive test coverage in `test_api.py`:
+  - `test_comment_row_written_on_add_link`: verifies `field='comment'` presence, timestamp match, correct
+    sequential number ('1' for first change).
+  - `test_comment_row_written_on_remove_link`: verifies sequential numbering across multiple events
+    ('1' for add, '2' for remove) and proper grouping by timestamp.
+
 ## [1.4.4] - 2026-08-21
 
 ### Fixed

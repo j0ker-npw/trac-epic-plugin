@@ -494,7 +494,13 @@ class EpicLinkSystem(Component):
                         % {'role': role, 'id': int(ticket_id)})
 
     def _write_change(self, db, ticket_id, author, when, oldvalue, newvalue):
-        """Insert a changelog row into ``ticket_change``.
+        """Insert changelog rows for one epic-link change.
+
+        Writes both the ``epic_link`` field row and a sequential ``comment``
+        row (matching what ``Ticket.save_changes`` always does) so that
+        deep-links like ``#comment:N`` work correctly and
+        ``ITicketChangeListener`` consumers can locate the change by its
+        comment number.
 
         Also bumps the ticket's ``changetime`` so the change is reflected in
         the ticket listing / timeline.
@@ -508,21 +514,47 @@ class EpicLinkSystem(Component):
            * **Pro** — the link row and both changelog rows are written in a
              single ``epic_links`` transaction, so the link and its audit
              trail are always consistent and cheap to write.
-           * **Con** — Trac's ``ITicketChangeListener`` notifications do not
-             fire for these synthetic changes (no e-mail notifications, no
-             listener-driven cache invalidation), and the manual
-             ``changetime`` bump could in principle race with a concurrent
-             legitimate ticket edit.
+           * **Con** — The manual ``changetime`` bump could in principle
+             race with a concurrent legitimate ticket edit.
 
-           Callers that need notification side effects should route through
-           the ``Ticket`` model instead.  All values here are parameterized,
-           so this is not an injection vector.
+           ``ITicketChangeListener`` notifications are fired by ``add_link``
+           and ``remove_link`` after the transaction commits.
+
+           All values here are parameterized, so this is not an injection
+           vector.
         """
+        # Compute the next sequential comment number for this ticket.
+        # Algorithm matches Ticket.save_changes() exactly.
+        num = 0
+        for ts, old in db("""
+                SELECT DISTINCT tc1.time, COALESCE(tc2.oldvalue, '')
+                FROM ticket_change AS tc1
+                LEFT OUTER JOIN ticket_change AS tc2
+                  ON tc2.ticket=%s AND tc2.time=tc1.time
+                     AND tc2.field='comment'
+                WHERE tc1.ticket=%s ORDER BY tc1.time DESC
+                """, (int(ticket_id), int(ticket_id))):
+            try:
+                num += int(old.rsplit('.', 1)[-1])
+                break
+            except ValueError:
+                num += 1
+        cnum = str(num + 1)
+
+        # Comment row — same timestamp as the epic_link row.
+        db("""
+            INSERT INTO ticket_change
+                (ticket, time, author, field, oldvalue, newvalue)
+            VALUES (%s, %s, %s, 'comment', %s, %s)
+            """, (int(ticket_id), when, author, cnum, ''))
+
+        # Epic-link row — unchanged.
         db("""
             INSERT INTO ticket_change
                 (ticket, time, author, field, oldvalue, newvalue)
             VALUES (%s, %s, %s, %s, %s, %s)
             """, (int(ticket_id), when, author, CHANGELOG_FIELD,
                   oldvalue, newvalue))
+
         db("UPDATE ticket SET changetime=%s WHERE id=%s",
            (when, int(ticket_id)))
